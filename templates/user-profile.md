@@ -1,57 +1,54 @@
 # ユーザープロフィール
 
-> このファイルはセットアップ時に自動で生成されます。
-> 内容を変更したい場合は直接編集してください。
-
----
+<!-- AI秘書がセットアップ時に自動で記入します。直接編集しても大丈夫です。 -->
 
 ## 基本情報
 
-名前（呼び方）: {{name}}
-事業内容: {{business}}
-ターゲット顧客: {{target}}
-一番の悩み・課題: {{main_challenge}}
+name:
+business:
+target:
+challenge:
+setup_date:
+improvement_check:
 
----
+## スタイル設定
+
+tone: （例: 親しみやすい / 丁寧 / カジュアル）
+closing: （例: よろしくお願いいたします / よろしくお願いします）
+sign: （例: 田中花子 / 田中）
 
 ## 使用ツール
 
-メルマガ配信: {{email_tool}}
-ブログ: {{blog_platform}}
-SNS: {{sns_platforms}}
-
----
+mail_tool: （例: Gmail / その他）
+calendar_tool: （例: Google Calendar / その他）
+blog: （例: Ameblo / note / WordPress / なし）
+sns: （例: Instagram / X / YouTube / なし）
+payment_tool: （例: UTAGE / Stripe / 銀行振込のみ）
 
 ## 連携設定
 
-Gmail連携: {{gmail_connected}}
-Google Calendar連携: {{calendar_connected}}
-Obsidian連携: {{obsidian_connected}}
-Obsidian Vaultパス: {{obsidian_path}}
+gmail_connected: false
+gcal_connected: false
+obsidian_vault:
+memory_location: memory/
 
----
+## 口座情報（見積書・請求書で自動入力）
 
-## 文体・トーン
+bank_name:
+branch_name:
+account_type: （例: 普通）
+account_number:
+account_holder:
 
-口調: {{tone}}
-（例: フレンドリー・丁寧・ビジネスライク・親しみやすい）
+## 顧客管理設定
 
----
-
-## 事業の強み・実績
-
-{{strengths}}
-
----
+followup_interval_days: 30
+（30日以上連絡がない顧客をフォローアップ欄に表示する）
 
 ## リサーチ結果
 
-HP・SNS等から把握した情報:
-{{research_summary}}
+<!-- URLリサーチで把握した事業・ターゲット・強みを記録 -->
 
----
+## 自動追記ログ
 
-## 更新履歴
-
-セットアップ日: {{setup_date}}
-最終更新: {{last_updated}}
+<!-- 会話中に判明した新情報を自動で追記 -->
