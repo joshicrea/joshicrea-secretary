@@ -80,9 +80,14 @@ Claude Codeが起動してチャット画面が表示されたら、いよいよ
 
 ```
 セットアップして。
-https://github.com/joshicrea/joshicrea-secretary.git をcloneして
+https://github.com/joshicrea/joshicrea-secretary.git を
+ホームフォルダ直下に ai-secretary という名前でcloneして
 AI秘書のオンボーディングを始めてください。
 ```
+
+> **「ホームフォルダ」って何？と思った方へ**
+> どのフォルダで起動してもAI秘書が動くように、決まった場所に保存します。
+> AI秘書が自動で場所を決めてくれるので、難しく考えなくて大丈夫です。
 
 > **コピーの仕方**
 > 上の文字を選択して、右クリック→「コピー」または Ctrl+C（Macは⌘+C）でコピーできます。
