@@ -1,8 +1,8 @@
 {
   "name": "joshicrea-secretary",
-  "description": "AI秘書スキル。事務（メール・予定）から発信（ブログ・SNS・メルマガ）まで一気通貫でサポートします。",
+  "description": "IT苦手な女性起業家向けAI秘書。事務（メール・予定・タスク）から発信（ブログ・SNS・メルマガ）まで一気通貫でサポートします。初回起動時に自動でセットアップを開始します。",
   "author": {
-    "name": "JoshiCrea",
+    "name": "joshicrea",
     "email": "info@joshicrea.com"
   }
 }
