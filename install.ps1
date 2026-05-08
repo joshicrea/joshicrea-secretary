@@ -1,12 +1,23 @@
 # AI秘書プラグイン インストールスクリプト
-# 使い方: PowerShellで以下を実行
-#   iwr https://raw.githubusercontent.com/joshicrea/joshicrea-secretary/master/install.ps1 | iex
+# 対象ユーザー: IT初心者の女性起業家（PowerShell 5.1以上で動作）
+# 使い方: Claude Codeのチャットに以下を貼り付けてEnter
+#   次のPowerShellコマンドを実行してAI秘書プラグインをインストールしてください：
+#   powershell -ExecutionPolicy Bypass -Command "iwr https://raw.githubusercontent.com/joshicrea/joshicrea-secretary/master/install.ps1 | iex"
+#   完了したら教えてください。
 
 $ErrorActionPreference = "Stop"
+$ProgressPreference = "SilentlyContinue"  # iwr の進捗UIを無効化（PS5.1でのハング防止）
 
 Write-Host ""
 Write-Host "AI秘書プラグインをインストールしています..."
 Write-Host ""
+
+# UTF-8 BOMなしでファイルを書き込む（PS5.1/PS7両対応）
+function Write-Utf8NoBom {
+    param([string]$Path, [string]$Content)
+    $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+    [System.IO.File]::WriteAllText($Path, $Content, $utf8NoBom)
+}
 
 # --- パス設定 ---
 $ClaudeDir = "$env:USERPROFILE\.claude"
@@ -17,7 +28,7 @@ New-Item -ItemType Directory -Force -Path $CacheDir | Out-Null
 
 # --- GitHubから最新コミット情報を取得 ---
 try {
-    $commitInfo = Invoke-RestMethod -Uri "https://api.github.com/repos/joshicrea/joshicrea-secretary/commits/master" -Headers @{"User-Agent"="joshicrea-install"}
+    $commitInfo = Invoke-RestMethod -Uri "https://api.github.com/repos/joshicrea/joshicrea-secretary/commits/master" -Headers @{"User-Agent"="joshicrea-install"} -UseBasicParsing
     $fullSha = $commitInfo.sha
     $shortSha = $fullSha.Substring(0, 12)
 } catch {
@@ -84,7 +95,7 @@ if ($Installed.plugins.PSObject.Properties[$Key]) {
     $Installed.plugins | Add-Member -Name $Key -Value @($PluginEntry) -MemberType NoteProperty
 }
 
-$Installed | ConvertTo-Json -Depth 10 | Set-Content $InstalledPath -Encoding UTF8NoBOM
+Write-Utf8NoBom -Path $InstalledPath -Content ($Installed | ConvertTo-Json -Depth 10)
 
 # --- settings.json に enabledPlugins を追加 ---
 $SettingsPath = "$ClaudeDir\settings.json"
@@ -105,7 +116,7 @@ if ($Settings.enabledPlugins.PSObject.Properties[$Key]) {
     $Settings.enabledPlugins | Add-Member -Name $Key -Value $true -MemberType NoteProperty
 }
 
-$Settings | ConvertTo-Json -Depth 10 | Set-Content $SettingsPath -Encoding UTF8NoBOM
+Write-Utf8NoBom -Path $SettingsPath -Content ($Settings | ConvertTo-Json -Depth 10)
 
 # --- 完了 ---
 Write-Host ""
