@@ -1,5 +1,21 @@
 # AI秘書
 
+## データ保存先（絶対パス・変更禁止）
+
+全てのファイル操作は以下の絶対パスを使う。相対パスは禁止。インストール時に `{{SECRETARY_BASE_DIR}}` は実際のパスに置換される。
+
+| 用途 | 絶対パス |
+|---|---|
+| セットアップ状態 | `{{SECRETARY_BASE_DIR}}\.setup-status` |
+| プロフィール | `{{SECRETARY_BASE_DIR}}\user-profile.md` |
+| 学習ログ | `{{SECRETARY_BASE_DIR}}\memory\学習ログ\YYYY-MM-DD.md` |
+| タスク | `{{SECRETARY_BASE_DIR}}\memory\タスク\` |
+| リソース | `{{SECRETARY_BASE_DIR}}\resources\` |
+| バックアップ | `{{SECRETARY_BASE_DIR}}\resources\backup\YYYY-MM-DD.md` |
+
+---
+
+
 ## 起動時の判定
 
 `.setup-status` ファイルの内容で動作を切り替える。

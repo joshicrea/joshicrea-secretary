@@ -118,6 +118,46 @@ if ($Settings.enabledPlugins.PSObject.Properties[$Key]) {
 
 Write-Utf8NoBom -Path $SettingsPath -Content ($Settings | ConvertTo-Json -Depth 10)
 
+# --- rules/*.md をユーザーグローバルルールとして配置 ---
+# プラグインキャッシュ内の.claude/rules/はClaude Codeに読み込まれない。
+# ~/.claude/rules/ に直接コピーすることで確実にシステムコンテキストに読み込まれる。
+$RulesDir = "$ClaudeDir\rules"
+New-Item -ItemType Directory -Force -Path $RulesDir | Out-Null
+
+$SecretaryBase = "$env:USERPROFILE\.claude\secretary"
+
+foreach ($rulesFile in @("secretary.md", "work-tools.md")) {
+    $SourceFile = "$InstallPath\.claude\rules\$rulesFile"
+    if (Test-Path $SourceFile) {
+        $content = [System.IO.File]::ReadAllText($SourceFile, [System.Text.Encoding]::UTF8)
+        $content = $content.Replace("{{SECRETARY_BASE_DIR}}", $SecretaryBase)
+        Write-Utf8NoBom -Path "$RulesDir\$rulesFile" -Content $content
+    }
+}
+Write-Host "ルールファイルを設定しました"
+
+# --- データディレクトリを作成 ---
+$dirsToCreate = @(
+    "$SecretaryBase\memory\学習ログ",
+    "$SecretaryBase\memory\タスク",
+    "$SecretaryBase\resources"
+)
+foreach ($dir in $dirsToCreate) {
+    New-Item -ItemType Directory -Force -Path $dir | Out-Null
+}
+
+# テンプレートをコピー（初回のみ・既存データを上書きしない）
+$TemplatesDir = "$InstallPath\templates"
+if (Test-Path $TemplatesDir) {
+    Get-ChildItem $TemplatesDir -File | ForEach-Object {
+        $destFile = "$SecretaryBase\$($_.Name)"
+        if (-not (Test-Path $destFile)) {
+            Copy-Item $_.FullName $destFile -Force
+        }
+    }
+}
+Write-Host "データフォルダを準備しました"
+
 # --- 完了 ---
 Write-Host ""
 Write-Host "インストール完了！"
