@@ -70,7 +70,7 @@ if (Test-Path $InstallPath) {
 $InstalledPath = "$PluginsDir\installed_plugins.json"
 
 if (Test-Path $InstalledPath) {
-    $Installed = Get-Content $InstalledPath -Raw | ConvertFrom-Json
+    $Installed = [System.IO.File]::ReadAllText($InstalledPath, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
 } else {
     New-Item -ItemType Directory -Force -Path $PluginsDir | Out-Null
     $Installed = [PSCustomObject]@{
@@ -101,7 +101,7 @@ Write-Utf8NoBom -Path $InstalledPath -Content ($Installed | ConvertTo-Json -Dept
 $SettingsPath = "$ClaudeDir\settings.json"
 
 if (Test-Path $SettingsPath) {
-    $Settings = Get-Content $SettingsPath -Raw | ConvertFrom-Json
+    $Settings = [System.IO.File]::ReadAllText($SettingsPath, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
 } else {
     $Settings = [PSCustomObject]@{}
 }
