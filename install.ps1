@@ -127,7 +127,7 @@ New-Item -ItemType Directory -Force -Path $RulesDir | Out-Null
 $SecretaryBase = "$env:USERPROFILE\.claude\secretary"
 
 # rulesファイルをコピー（{{SECRETARY_BASE_DIR}}を実際のパスに置換）
-foreach ($rulesFile in @("secretary.md", "work-tools.md")) {
+foreach ($rulesFile in (Get-ChildItem "$InstallPath\.claude\rules" -Filter "*.md" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name)) {
     $SourceFile = "$InstallPath\.claude\rules\$rulesFile"
     if (Test-Path $SourceFile) {
         $content = [System.IO.File]::ReadAllText($SourceFile, [System.Text.Encoding]::UTF8)
