@@ -126,6 +126,7 @@ New-Item -ItemType Directory -Force -Path $RulesDir | Out-Null
 
 $SecretaryBase = "$env:USERPROFILE\.claude\secretary"
 
+# rulesファイルをコピー（{{SECRETARY_BASE_DIR}}を実際のパスに置換）
 foreach ($rulesFile in @("secretary.md", "work-tools.md")) {
     $SourceFile = "$InstallPath\.claude\rules\$rulesFile"
     if (Test-Path $SourceFile) {
@@ -134,7 +135,17 @@ foreach ($rulesFile in @("secretary.md", "work-tools.md")) {
         Write-Utf8NoBom -Path "$RulesDir\$rulesFile" -Content $content
     }
 }
-Write-Host "ルールファイルを設定しました"
+
+# --- SKILL.md の{{SECRETARY_BASE_DIR}}をプラグインキャッシュ内で置換 ---
+# Skillツールはキャッシュ内のSKILL.mdを読む。絶対パスに置換しておかないとパスが壊れる。
+Get-ChildItem "$InstallPath\.claude\skills" -Recurse -Filter "SKILL.md" -ErrorAction SilentlyContinue | ForEach-Object {
+    $skillContent = [System.IO.File]::ReadAllText($_.FullName, [System.Text.Encoding]::UTF8)
+    $skillReplaced = $skillContent.Replace("{{SECRETARY_BASE_DIR}}", $SecretaryBase)
+    if ($skillReplaced -ne $skillContent) {
+        Write-Utf8NoBom -Path $_.FullName -Content $skillReplaced
+    }
+}
+Write-Host "ルールファイルとスキルを設定しました"
 
 # --- データディレクトリを作成 ---
 $dirsToCreate = @(
@@ -157,6 +168,30 @@ if (Test-Path $TemplatesDir) {
     }
 }
 Write-Host "データフォルダを準備しました"
+
+# --- インストール後の検証 ---
+$verifyOk = $true
+$requiredFiles = @(
+    "$RulesDir\secretary.md",
+    "$SecretaryBase\user-profile.md"
+)
+foreach ($f in $requiredFiles) {
+    if (-not (Test-Path $f)) {
+        Write-Host "エラー: $f が作成されませんでした"
+        $verifyOk = $false
+    }
+}
+# secretary.mdにプレースホルダーが残っていないか確認
+$secContent = [System.IO.File]::ReadAllText("$RulesDir\secretary.md", [System.Text.Encoding]::UTF8)
+if ($secContent.Contains("{{SECRETARY_BASE_DIR}}")) {
+    Write-Host "エラー: secretary.mdのパス置換が不完全です"
+    $verifyOk = $false
+}
+if (-not $verifyOk) {
+    Write-Host ""
+    Write-Host "インストールに問題が発生しました。もう一度試してください。"
+    exit 1
+}
 
 # --- 完了 ---
 Write-Host ""
