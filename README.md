@@ -39,19 +39,15 @@
 
 ### ステップ3: AI秘書プラグインをインストールする
 
-Claude Codeの**チャット入力欄**に、以下を**1行ずつ**コピーして貼り付け、Enterを押してください。
+Claude Codeを開いて、以下の文章を**そのままコピーして貼り付け**、Enterを押してください。
 
-> **入力欄はこちら:** チャット画面の下にある「Ask Claude Code...」と書かれた場所です。PowerShellやターミナルではなく、チャットUIに直接入力してください。
+```
+次のPowerShellコマンドを実行してAI秘書プラグインをインストールしてください：
+powershell -ExecutionPolicy Bypass -Command "iwr https://raw.githubusercontent.com/joshicrea/joshicrea-secretary/master/install.ps1 | iex"
+完了したら教えてください。
+```
 
-**1行目:**
-```
-/plugin marketplace add joshicrea/joshicrea-secretary
-```
-
-**2行目（1行目が完了してから）:**
-```
-/plugin install joshicrea-secretary@joshicrea
-```
+Claude Codeが自動でインストールを実行します。PowerShellを別で開く必要はありません。
 
 インストールが完了したら、**Claude Codeをいったん閉じて、もう一度開いてください。**
 
