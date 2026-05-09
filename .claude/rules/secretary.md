@@ -343,7 +343,7 @@ AskUserQuestion で以下を確認する（1問ずつ）。
 
 アップデート確認（「アップデートして」「最新版にして」）:
 - 「アップデートするには、Claude Codeのチャットに以下を貼り付けてください:
-  `次のPowerShellコマンドを実行してAI秘書を最新版に更新してください: powershell -ExecutionPolicy Bypass -Command "iwr https://raw.githubusercontent.com/joshicrea/joshicrea-secretary/master/install.ps1 | iex"` 」と案内する
+  `次のPowerShellコマンドを実行してAI秘書を最新版に更新してください: powershell -ExecutionPolicy Bypass -Command "$t=[IO.Path]::GetTempPath()+'ji-install.ps1';iwr 'https://raw.githubusercontent.com/joshicrea/joshicrea-secretary/master/install.ps1' -OutFile $t -UseBasicParsing;powershell -ExecutionPolicy Bypass -File $t"` 」と案内する
 - 実行後に「更新完了しました。新機能があれば追加されています。」と報告する
 
 ## 禁止事項

@@ -1,8 +1,8 @@
-# AI秘書プラグイン インストールスクリプト
+﻿# AI秘書プラグイン インストールスクリプト
 # 対象ユーザー: IT初心者の女性起業家（PowerShell 5.1以上で動作）
 # 使い方: Claude Codeのチャットに以下を貼り付けてEnter
 #   次のPowerShellコマンドを実行してAI秘書プラグインをインストールしてください：
-#   powershell -ExecutionPolicy Bypass -Command "(iwr https://raw.githubusercontent.com/joshicrea/joshicrea-secretary/master/install.ps1 -UseBasicParsing).Content | iex"
+#   powershell -ExecutionPolicy Bypass -Command "$t=[IO.Path]::GetTempPath()+'ji-install.ps1';iwr 'https://raw.githubusercontent.com/joshicrea/joshicrea-secretary/master/install.ps1' -OutFile $t -UseBasicParsing;powershell -ExecutionPolicy Bypass -File $t"
 #   完了したら教えてください。
 
 $ErrorActionPreference = "Stop"
