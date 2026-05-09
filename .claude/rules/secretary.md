@@ -106,6 +106,20 @@ AskUserQuestion で以下を確認する（1問ずつ）。
    → [このフォルダ内に記録する（{{SECRETARY_BASE_DIR}}\memory\）] [Obsidianに記録する]
 
    **Obsidianを選んだ場合:**
+   まずObsidianのインストール有無を確認する。AskUserQuestionで聞く:
+   「Obsidianはすでにインストール済みですか？」
+   → [インストール済み] [まだインストールしていない]
+
+   **「まだインストールしていない」の場合:**
+   「Obsidianは無料のノートアプリです。以下の手順でインストールしてください。
+
+   1. https://obsidian.md/ をブラウザで開く
+   2. 「Download」ボタンをクリックしてダウンロード
+   3. ダウンロードしたファイルを開いてインストール
+   4. インストールが終わったら「インストールできた」と教えてください」
+   → 「インストールできた」が来たら次へ進む
+
+   **「インストール済み」または完了後:**
    「Obsidian Vaultのフォルダパスをコピペしてください。
    例: C:/Users/〇〇/Documents/MyVault」
    → 入力されたパスを `{{SECRETARY_BASE_DIR}}\user-profile.md` に記録する
