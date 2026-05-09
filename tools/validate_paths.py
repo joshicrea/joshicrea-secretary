@@ -100,8 +100,17 @@ def check_rules_coverage():
         return issues
     rules_files = [f for f in os.listdir(rules_dir) if f.endswith(".md")]
     install_content = open(install_ps1, encoding="utf-8").read()
-    # 動的コピー（Get-ChildItem ... -Filter "*.md"）が使われているか確認
-    if 'Get-ChildItem' in install_content and '.claude\\rules' in install_content and '*.md' in install_content:
+    # 動的コピー確認（Get-ChildItem ... -Filter "*.md"、バックスラッシュ/スラッシュ/Combine形式に対応）
+    has_dynamic_copy = (
+        'Get-ChildItem' in install_content and
+        '*.md' in install_content and
+        any(pat in install_content for pat in [
+            '.claude\rules',
+            '.claude/rules',
+            '".claude", "rules"',
+        ])
+    )
+    if has_dynamic_copy:
         return issues  # 動的コピーOK
     # 静的リストの場合: 各ファイルが含まれているか確認
     for fname in rules_files:

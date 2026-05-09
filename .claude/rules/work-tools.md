@@ -1,7 +1,7 @@
 # 使用ツール設定
 
 このファイルはセットアップ時に自動で更新されます。
-設定内容は `{{SECRETARY_BASE_DIR}}\user-profile.md` に記録されています。
+設定内容は `{{SECRETARY_BASE_DIR}}/user-profile.md` に記録されています。
 
 ## ツール別の動作ルール
 

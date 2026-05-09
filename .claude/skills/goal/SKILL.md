@@ -29,7 +29,7 @@ updated: YYYY-MM-DD
 
 CronCreateで毎週月曜9時3分に進捗確認を登録する（durable: true・recurring: true）:
 - cron: `3 9 * * 1`
-- prompt: `{{SECRETARY_BASE_DIR}}\memory\目標\ の今月ファイルを読んで、目標に対する進捗を表示してください。達成率を計算して「目標: 〇〇 \ 現在: 〇〇（達成率〇%）」の形式で報告してください。`
+- prompt: `{{SECRETARY_BASE_DIR}}/memory/目標/ の今月ファイルを読んで、目標に対する進捗を表示してください。達成率を計算して「目標: 〇〇 \ 現在: 〇〇（達成率〇%）」の形式で報告してください。`
 
 ---
 

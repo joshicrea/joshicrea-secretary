@@ -1,5 +1,7 @@
 ﻿# AI秘書プラグイン インストールスクリプト
-# 対象ユーザー: IT初心者の女性起業家（PowerShell 5.1以上で動作）
+# 対象ユーザー: IT初心者の女性起業家
+#   Windows: PowerShell 5.1以上
+#   Mac/Linux: PowerShell 7以上（pwsh）が必要
 # 使い方: Claude Code のチャットに以下をそのままコピペしてください
 #
 #   以下のURLからAI秘書プラグインのインストールスクリプトを取得して、
@@ -8,7 +10,7 @@
 #
 
 $ErrorActionPreference = "Stop"
-$ProgressPreference = "SilentlyContinue"  # iwr の進捗UIを無効化（PS5.1でのハング防止）
+$ProgressPreference = "SilentlyContinue"
 
 Write-Host ""
 Write-Host "AI秘書プラグインをインストールしています..."
@@ -21,10 +23,16 @@ function Write-Utf8NoBom {
     [System.IO.File]::WriteAllText($Path, $Content, $utf8NoBom)
 }
 
-# --- パス設定 ---
-$ClaudeDir = "$env:USERPROFILE\.claude"
-$PluginsDir = "$ClaudeDir\plugins"
-$CacheDir   = "$PluginsDir\cache\joshicrea\joshicrea-secretary"
+# --- OS判定・パス設定（Windows / Mac / Linux 共通対応）---
+if ($IsWindows -or ($PSVersionTable.PSVersion.Major -lt 6)) {
+    $HomeDir = $env:USERPROFILE
+} else {
+    $HomeDir = $env:HOME
+}
+$TempDir    = [IO.Path]::GetTempPath()
+$ClaudeDir  = [IO.Path]::Combine($HomeDir, ".claude")
+$PluginsDir = [IO.Path]::Combine($ClaudeDir, "plugins")
+$CacheDir   = [IO.Path]::Combine($PluginsDir, "cache", "joshicrea", "joshicrea-secretary")
 
 New-Item -ItemType Directory -Force -Path $CacheDir | Out-Null
 
@@ -38,7 +46,7 @@ try {
     exit 1
 }
 
-$InstallPath = "$CacheDir\$shortSha"
+$InstallPath = [IO.Path]::Combine($CacheDir, $shortSha)
 
 # すでにインストール済みの場合はスキップ
 if (Test-Path $InstallPath) {
@@ -46,8 +54,8 @@ if (Test-Path $InstallPath) {
 } else {
     # --- ZIPをダウンロードして展開 ---
     $ZipUrl  = "https://github.com/joshicrea/joshicrea-secretary/archive/refs/heads/master.zip"
-    $ZipPath = "$env:TEMP\joshicrea-secretary.zip"
-    $ExtTemp = "$env:TEMP\joshicrea-extract-$shortSha"
+    $ZipPath = [IO.Path]::Combine($TempDir, "joshicrea-secretary.zip")
+    $ExtTemp = [IO.Path]::Combine($TempDir, "joshicrea-extract-$shortSha")
 
     try {
         Invoke-WebRequest -Uri $ZipUrl -OutFile $ZipPath -UseBasicParsing
@@ -69,7 +77,7 @@ if (Test-Path $InstallPath) {
 }
 
 # --- installed_plugins.json を更新 ---
-$InstalledPath = "$PluginsDir\installed_plugins.json"
+$InstalledPath = [IO.Path]::Combine($PluginsDir, "installed_plugins.json")
 
 if (Test-Path $InstalledPath) {
     $Installed = [System.IO.File]::ReadAllText($InstalledPath, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
@@ -100,7 +108,7 @@ if ($Installed.plugins.PSObject.Properties[$Key]) {
 Write-Utf8NoBom -Path $InstalledPath -Content ($Installed | ConvertTo-Json -Depth 10)
 
 # --- settings.json に enabledPlugins を追加 ---
-$SettingsPath = "$ClaudeDir\settings.json"
+$SettingsPath = [IO.Path]::Combine($ClaudeDir, "settings.json")
 
 if (Test-Path $SettingsPath) {
     $Settings = [System.IO.File]::ReadAllText($SettingsPath, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
@@ -123,24 +131,25 @@ Write-Utf8NoBom -Path $SettingsPath -Content ($Settings | ConvertTo-Json -Depth 
 # --- rules/*.md をユーザーグローバルルールとして配置 ---
 # プラグインキャッシュ内の.claude/rules/はClaude Codeに読み込まれない。
 # ~/.claude/rules/ に直接コピーすることで確実にシステムコンテキストに読み込まれる。
-$RulesDir = "$ClaudeDir\rules"
+$RulesDir      = [IO.Path]::Combine($ClaudeDir, "rules")
+$SecretaryBase = [IO.Path]::Combine($ClaudeDir, "secretary")
 New-Item -ItemType Directory -Force -Path $RulesDir | Out-Null
 
-$SecretaryBase = "$env:USERPROFILE\.claude\secretary"
-
 # rulesファイルをコピー（{{SECRETARY_BASE_DIR}}を実際のパスに置換）
-foreach ($rulesFile in (Get-ChildItem "$InstallPath\.claude\rules" -Filter "*.md" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name)) {
-    $SourceFile = "$InstallPath\.claude\rules\$rulesFile"
+$SourceRulesDir = [IO.Path]::Combine($InstallPath, ".claude", "rules")
+foreach ($rulesFile in (Get-ChildItem $SourceRulesDir -Filter "*.md" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name)) {
+    $SourceFile = [IO.Path]::Combine($SourceRulesDir, $rulesFile)
     if (Test-Path $SourceFile) {
         $content = [System.IO.File]::ReadAllText($SourceFile, [System.Text.Encoding]::UTF8)
         $content = $content.Replace("{{SECRETARY_BASE_DIR}}", $SecretaryBase)
-        Write-Utf8NoBom -Path "$RulesDir\$rulesFile" -Content $content
+        Write-Utf8NoBom -Path ([IO.Path]::Combine($RulesDir, $rulesFile)) -Content $content
     }
 }
 
 # --- SKILL.md の{{SECRETARY_BASE_DIR}}をプラグインキャッシュ内で置換 ---
 # Skillツールはキャッシュ内のSKILL.mdを読む。絶対パスに置換しておかないとパスが壊れる。
-Get-ChildItem "$InstallPath\.claude\skills" -Recurse -Filter "SKILL.md" -ErrorAction SilentlyContinue | ForEach-Object {
+$SourceSkillsDir = [IO.Path]::Combine($InstallPath, ".claude", "skills")
+Get-ChildItem $SourceSkillsDir -Recurse -Filter "SKILL.md" -ErrorAction SilentlyContinue | ForEach-Object {
     $skillContent = [System.IO.File]::ReadAllText($_.FullName, [System.Text.Encoding]::UTF8)
     $skillReplaced = $skillContent.Replace("{{SECRETARY_BASE_DIR}}", $SecretaryBase)
     if ($skillReplaced -ne $skillContent) {
@@ -151,19 +160,19 @@ Write-Host "ルールファイルとスキルを設定しました"
 
 # --- データディレクトリを作成 ---
 $dirsToCreate = @(
-    "$SecretaryBase\memory\学習ログ",
-    "$SecretaryBase\memory\タスク",
-    "$SecretaryBase\resources"
+    [IO.Path]::Combine($SecretaryBase, "memory", "学習ログ"),
+    [IO.Path]::Combine($SecretaryBase, "memory", "タスク"),
+    [IO.Path]::Combine($SecretaryBase, "resources")
 )
 foreach ($dir in $dirsToCreate) {
     New-Item -ItemType Directory -Force -Path $dir | Out-Null
 }
 
 # テンプレートをコピー（初回のみ・既存データを上書きしない）
-$TemplatesDir = "$InstallPath\templates"
+$TemplatesDir = [IO.Path]::Combine($InstallPath, "templates")
 if (Test-Path $TemplatesDir) {
     Get-ChildItem $TemplatesDir -File | ForEach-Object {
-        $destFile = "$SecretaryBase\$($_.Name)"
+        $destFile = [IO.Path]::Combine($SecretaryBase, $_.Name)
         if (-not (Test-Path $destFile)) {
             Copy-Item $_.FullName $destFile -Force
         }
@@ -172,11 +181,11 @@ if (Test-Path $TemplatesDir) {
 Write-Host "データフォルダを準備しました"
 
 # --- インストール後の検証 ---
-$verifyOk = $true
-$requiredFiles = @(
-    "$RulesDir\secretary.md",
-    "$SecretaryBase\user-profile.md"
-)
+$verifyOk    = $true
+$secMdPath   = [IO.Path]::Combine($RulesDir, "secretary.md")
+$profilePath = [IO.Path]::Combine($SecretaryBase, "user-profile.md")
+$requiredFiles = @($secMdPath, $profilePath)
+
 foreach ($f in $requiredFiles) {
     if (-not (Test-Path $f)) {
         Write-Host "エラー: $f が作成されませんでした"
@@ -184,7 +193,7 @@ foreach ($f in $requiredFiles) {
     }
 }
 # secretary.mdにプレースホルダーが残っていないか確認
-$secContent = [System.IO.File]::ReadAllText("$RulesDir\secretary.md", [System.Text.Encoding]::UTF8)
+$secContent = [System.IO.File]::ReadAllText($secMdPath, [System.Text.Encoding]::UTF8)
 if ($secContent.Contains("{{SECRETARY_BASE_DIR}}")) {
     Write-Host "エラー: secretary.mdのパス置換が不完全です"
     $verifyOk = $false

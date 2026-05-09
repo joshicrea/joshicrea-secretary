@@ -29,7 +29,7 @@ registered: YYYY-MM-DD
 
 Step 3: CronCreateで毎月支払日3日前の朝9時に通知を登録する（durable: true）:
 - cron: `0 9 [due_day-3] * *`
-- prompt: `{{SECRETARY_BASE_DIR}}\memory\支払い管理.md を読んで、[サービス名]の支払い期限が3日後（[due_day]日）に迫っています。金額は[amount]円です。ユーザーに通知してください。`
+- prompt: `{{SECRETARY_BASE_DIR}}/memory/支払い管理.md を読んで、[サービス名]の支払い期限が3日後（[due_day]日）に迫っています。金額は[amount]円です。ユーザーに通知してください。`
 
 「[サービス名]（毎月[due_day]日・[amount]円）を登録しました。支払日3日前の朝9時に通知します。」と報告する。
 

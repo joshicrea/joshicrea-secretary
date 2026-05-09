@@ -27,10 +27,10 @@ Claude Code のプラグインシステムでは、キャッシュ内の `.claud
 
 | 禁止 | 正しい書き方 |
 |---|---|
-| `` `.setup-status` `` | `` `{{SECRETARY_BASE_DIR}}\.setup-status` `` |
-| `` `memory/タスク/` `` | `` `{{SECRETARY_BASE_DIR}}\memory\タスク\` `` |
-| `` `templates/user-profile.md` `` | `` `{{SECRETARY_BASE_DIR}}\user-profile.md` `` |
-| `` `resources/backup/` `` | `` `{{SECRETARY_BASE_DIR}}\resources\backup\` `` |
+| `` `.setup-status` `` | `` `{{SECRETARY_BASE_DIR}}/.setup-status` `` |
+| `` `memory/タスク/` `` | `` `{{SECRETARY_BASE_DIR}}/memory/タスク/` `` |
+| `` `templates/user-profile.md` `` | `` `{{SECRETARY_BASE_DIR}}/user-profile.md` `` |
+| `` `resources/backup/` `` | `` `{{SECRETARY_BASE_DIR}}/resources/backup/` `` |
 
 ### SKILL.md での注意
 

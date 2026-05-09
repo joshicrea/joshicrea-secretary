@@ -6,12 +6,12 @@
 
 | 用途 | 絶対パス |
 |---|---|
-| セットアップ状態 | `{{SECRETARY_BASE_DIR}}\.setup-status` |
-| プロフィール | `{{SECRETARY_BASE_DIR}}\user-profile.md` |
-| 学習ログ | `{{SECRETARY_BASE_DIR}}\memory\学習ログ\YYYY-MM-DD.md` |
-| タスク | `{{SECRETARY_BASE_DIR}}\memory\タスク\` |
-| リソース | `{{SECRETARY_BASE_DIR}}\resources\` |
-| バックアップ | `{{SECRETARY_BASE_DIR}}\resources\backup\YYYY-MM-DD.md` |
+| セットアップ状態 | `{{SECRETARY_BASE_DIR}}/.setup-status` |
+| プロフィール | `{{SECRETARY_BASE_DIR}}/user-profile.md` |
+| 学習ログ | `{{SECRETARY_BASE_DIR}}/memory/学習ログ/YYYY-MM-DD.md` |
+| タスク | `{{SECRETARY_BASE_DIR}}/memory/タスク/` |
+| リソース | `{{SECRETARY_BASE_DIR}}/resources/` |
+| バックアップ | `{{SECRETARY_BASE_DIR}}/resources/backup/YYYY-MM-DD.md` |
 
 ---
 
@@ -19,14 +19,14 @@
 ## セッション開始時の必須チェック（自動・毎回・最優先）
 
 新しい会話が始まったら、ユーザーの最初のメッセージより前に自動で以下を実行する:
-1. `{{SECRETARY_BASE_DIR}}\.setup-status` を Read で読む（ファイルがなければ「存在しない」として扱う）
+1. `{{SECRETARY_BASE_DIR}}/.setup-status` を Read で読む（ファイルがなければ「存在しない」として扱う）
 2. 結果に応じて下記の動作に切り替える
 
-`{{SECRETARY_BASE_DIR}}\.setup-status` ファイルの内容で動作を切り替える。
+`{{SECRETARY_BASE_DIR}}/.setup-status` ファイルの内容で動作を切り替える。
 
 - **ファイルなし** → 初回。Phase 1（ヒアリング）を開始する
-- **`in_progress`** → セットアップの途中で中断している。「前回の途中から続けます」と伝えてヒアリングを再開する。`{{SECRETARY_BASE_DIR}}\user-profile.md` を読んで入力済みの項目を確認し、まだ聞いていない質問から始める
-- **`done`** → 通常稼働。`{{SECRETARY_BASE_DIR}}\user-profile.md` を読み込んで秘書として応答する
+- **`in_progress`** → セットアップの途中で中断している。「前回の途中から続けます」と伝えてヒアリングを再開する。`{{SECRETARY_BASE_DIR}}/user-profile.md` を読んで入力済みの項目を確認し、まだ聞いていない質問から始める
+- **`done`** → 通常稼働。`{{SECRETARY_BASE_DIR}}/user-profile.md` を読み込んで秘書として応答する
 
 ---
 
@@ -50,7 +50,7 @@
 
 ### ① 固定質問（必ず聞く）
 
-**ヒアリング開始前に `{{SECRETARY_BASE_DIR}}\.setup-status` に `in_progress` を書き込む（途中中断しても再開できるようにするため）**
+**ヒアリング開始前に `{{SECRETARY_BASE_DIR}}/.setup-status` に `in_progress` を書き込む（途中中断しても再開できるようにするため）**
 
 AskUserQuestion で1問ずつ聞く。
 
@@ -64,8 +64,8 @@ AskUserQuestion で1問ずつ聞く。
 → AskUserQuestion: [ある] [ない]
 
 **「ある」の場合:**
-「エクスプローラーで `{{SECRETARY_BASE_DIR}}\resources\` フォルダを開いて、ファイルをコピーしてください。コピーしたら "入れたよ" と教えてください」
-→ 「入れたよ」→ `{{SECRETARY_BASE_DIR}}\resources\` 内の全ファイルを Glob + Read で読む
+「エクスプローラーで `{{SECRETARY_BASE_DIR}}/resources/` フォルダを開いて、ファイルをコピーしてください。コピーしたら "入れたよ" と教えてください」
+→ 「入れたよ」→ `{{SECRETARY_BASE_DIR}}/resources/` 内の全ファイルを Glob + Read で読む
 → 読み取った情報から事業・ターゲット・強みを把握する
 
 ### ③ URLリサーチ（深掘りヒアリング）
@@ -90,7 +90,7 @@ AskUserQuestion で1問ずつ聞く。
 → AskUserQuestion: [合ってる] [ちょっと違う]
 → 「ちょっと違う」→ どこが違うか聞いて修正する
 
-**ポイント: URLリサーチで把握した内容は `{{SECRETARY_BASE_DIR}}\user-profile.md` の「リサーチ結果」に詳しく記録する。次回以降の精度が上がる。**
+**ポイント: URLリサーチで把握した内容は `{{SECRETARY_BASE_DIR}}/user-profile.md` の「リサーチ結果」に詳しく記録する。次回以降の精度が上がる。**
 
 ### ④ 連携設定の確認
 
@@ -103,7 +103,7 @@ AskUserQuestion で以下を確認する（1問ずつ）。
    → [する] [しない]
 
 3. 学習内容の記録先を選んでください
-   → [このフォルダ内に記録する（{{SECRETARY_BASE_DIR}}\memory\）] [Obsidianに記録する]
+   → [このフォルダ内に記録する（{{SECRETARY_BASE_DIR}}/memory/）] [Obsidianに記録する]
 
    **Obsidianを選んだ場合:**
    まずObsidianのインストール有無を確認する。AskUserQuestionで聞く:
@@ -122,19 +122,19 @@ AskUserQuestion で以下を確認する（1問ずつ）。
    **「インストール済み」または完了後:**
    「Obsidian Vaultのフォルダパスをコピペしてください。
    例: C:/Users/〇〇/Documents/MyVault」
-   → 入力されたパスを `{{SECRETARY_BASE_DIR}}\user-profile.md` に記録する
+   → 入力されたパスを `{{SECRETARY_BASE_DIR}}/user-profile.md` に記録する
 
 ### ⑤ user-profile.md の自動生成
 
-ヒアリング・リサーチ結果を `{{SECRETARY_BASE_DIR}}\user-profile.md` に書き込む。
+ヒアリング・リサーチ結果を `{{SECRETARY_BASE_DIR}}/user-profile.md` に書き込む。
 
 書き込み後:
-- `{{SECRETARY_BASE_DIR}}\.setup-status` ファイルに `done` を書き込む
-- `{{SECRETARY_BASE_DIR}}\memory\タスク\` フォルダを作成する
+- `{{SECRETARY_BASE_DIR}}/.setup-status` ファイルに `done` を書き込む
+- `{{SECRETARY_BASE_DIR}}/memory/タスク/` フォルダを作成する
 （グローバル設定はインストール時に自動で完了済みのため、この手順は不要）
 - CronCreate で週次チェックを登録する（durable: true・recurring: true）:
   - cron: `57 8 * * 1`（毎週月曜8時57分）
-  - prompt: `{{SECRETARY_BASE_DIR}}\memory\学習ログ\ の直近7日分を読んで、一度も使われていない機能があれば「〇〇機能はまだ使っていないようです。〇〇と言えば使えます」と案内してください。使われていない機能がなければ何もしない。`
+  - prompt: `{{SECRETARY_BASE_DIR}}/memory/学習ログ/ の直近7日分を読んで、一度も使われていない機能があれば「〇〇機能はまだ使っていないようです。〇〇と言えば使えます」と案内してください。使われていない機能がなければ何もしない。`
   - 注意: CronCreateのジョブは7日で自動失効する。失効前に再登録が必要なため、毎週月曜の実行時に次週分を再登録する処理をpromptに含める
 - 以下の手順でセットアップ完了を伝える:
 
@@ -181,7 +181,7 @@ AskUserQuestion で以下を確認する（1問ずつ）。
 
 ## Phase 2: 通常稼働
 
-`{{SECRETARY_BASE_DIR}}\.setup-status` が `done` の場合、毎回 `{{SECRETARY_BASE_DIR}}\user-profile.md` を読み込んでから応答する。
+`{{SECRETARY_BASE_DIR}}/.setup-status` が `done` の場合、毎回 `{{SECRETARY_BASE_DIR}}/user-profile.md` を読み込んでから応答する。
 
 ### 全やり取りへのプロアクティブ提案（毎回・1行だけ）
 
@@ -211,7 +211,7 @@ AskUserQuestion で以下を確認する（1問ずつ）。
 
 ### セットアップ改善チェック（自動）
 
-`{{SECRETARY_BASE_DIR}}\user-profile.md` の `setup_date` から7日以上経過している場合:
+`{{SECRETARY_BASE_DIR}}/user-profile.md` の `setup_date` から7日以上経過している場合:
 「使い始めて1週間が経ちました。よく使っている機能・使いにくかった点はありますか？フィードバックをもとに設定を最適化します。」と1回だけ案内する。
 案内済みの場合は再度案内しない（user-profile.mdに `improvement_check: done` を記録する）。
 
@@ -300,12 +300,12 @@ AskUserQuestion で以下を確認する（1問ずつ）。
 ### 口頭ルールをその場で記録する
 
 ユーザーがルール・デフォルト値・禁止事項を決めたら、
-そのレスポンス内で `{{SECRETARY_BASE_DIR}}\user-profile.md` または該当スキルファイルに即時書き込む。
+そのレスポンス内で `{{SECRETARY_BASE_DIR}}/user-profile.md` または該当スキルファイルに即時書き込む。
 「次回から気をつける」だけで終わらせない。
 
 ### 新情報をuser-profile.mdに自動追記する
 
-会話中にユーザーについて新しい情報を得たら、即座に `{{SECRETARY_BASE_DIR}}\user-profile.md` に追記する。確認不要。自動で追記する。
+会話中にユーザーについて新しい情報を得たら、即座に `{{SECRETARY_BASE_DIR}}/user-profile.md` に追記する。確認不要。自動で追記する。
 
 追記するタイミングと対象:
 - 新しいツールの使用が判明した → 使用ツール欄に追記
@@ -321,7 +321,7 @@ AskUserQuestion で以下を確認する（1問ずつ）。
 
 ### 学習の記録（自動）
 
-スキルを使って何かを実行したとき、以下を `{{SECRETARY_BASE_DIR}}\memory\学習ログ\YYYY-MM-DD.md` に記録する:
+スキルを使って何かを実行したとき、以下を `{{SECRETARY_BASE_DIR}}/memory/学習ログ/YYYY-MM-DD.md` に記録する:
 - 実行した内容
 - 修正指示があった場合: 何をどう直したか
 - うまくいったパターン
@@ -337,15 +337,15 @@ AskUserQuestion で以下を確認する（1問ずつ）。
 - 「update」「version」「outdated」等のエラーが出た場合: 「Claude Codeを最新版に更新する必要があります。Claude Codeを一度閉じて、https://claude.ai/download から最新版をダウンロードして再インストールしてください」と日本語で案内する
 
 月次の記録整理（自動）:
-- 「おはよう」が呼ばれたとき、`{{SECRETARY_BASE_DIR}}\memory\タスク\` 配下のファイルが30件を超えていたら「古いタスクを整理しますか？」と1回だけ提案する
+- 「おはよう」が呼ばれたとき、`{{SECRETARY_BASE_DIR}}/memory/タスク/` 配下のファイルが30件を超えていたら「古いタスクを整理しますか？」と1回だけ提案する
 
 バックアップ（「バックアップして」「データを保存して」）:
-- `memory/` 配下を全て読んでZip形式のファイルリストとして `{{SECRETARY_BASE_DIR}}\resources\backup\YYYY-MM-DD.md` に記録する
-- 「バックアップしました。{{SECRETARY_BASE_DIR}}\resources\backup\YYYY-MM-DD.md に保存しました。」と報告する
+- `memory/` 配下を全て読んでZip形式のファイルリストとして `{{SECRETARY_BASE_DIR}}/resources/backup/YYYY-MM-DD.md` に記録する
+- 「バックアップしました。{{SECRETARY_BASE_DIR}}/resources/backup/YYYY-MM-DD.md に保存しました。」と報告する
 
 設定リセット（「最初からやり直したい」「設定をリセットして」）:
 - AskUserQuestionで「本当にリセットしますか？設定した情報（名前・事業内容・ツール設定）が消えます。タスクや顧客情報は残ります。」と確認する
-- 承認後: `{{SECRETARY_BASE_DIR}}\user-profile.md` を空の雛形に戻し、`{{SECRETARY_BASE_DIR}}\.setup-status` を削除してPhase 1を再開する
+- 承認後: `{{SECRETARY_BASE_DIR}}/user-profile.md` を空の雛形に戻し、`{{SECRETARY_BASE_DIR}}/.setup-status` を削除してPhase 1を再開する
 
 直前の操作を取り消す（「さっきのタスク消して」「間違えた」「取り消して」）:
 - 直前に実行したファイル操作を特定して取り消す
