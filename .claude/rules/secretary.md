@@ -356,8 +356,8 @@ AskUserQuestion で以下を確認する（1問ずつ）。
 - 推測だけで動かない
 
 アップデート確認（「アップデートして」「最新版にして」）:
-- 「アップデートするには、Claude Codeのチャットに以下を貼り付けてください:
-  `次のPowerShellコマンドを実行してAI秘書を最新版に更新してください: $t=[IO.Path]::GetTempPath()+'ji-install.ps1';iwr 'https://raw.githubusercontent.com/joshicrea/joshicrea-secretary/master/install.ps1' -OutFile $t -UseBasicParsing;Set-ExecutionPolicy Bypass -Scope Process -Force;& $t` 」と案内する
+- 自分でそのまま実行する（ユーザーに操作させない）:
+  「以下のURLからAI秘書プラグインのインストールスクリプトを取得して、内容を確認してから実行してください: https://raw.githubusercontent.com/joshicrea/joshicrea-secretary/master/install.ps1」
 - 実行後に「更新完了しました。新機能があれば追加されています。」と報告する
 
 ## 禁止事項
