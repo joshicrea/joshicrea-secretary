@@ -48,7 +48,7 @@ Step 3: 報告フォーマット:
 
 ## 「〇〇に返信して」「Chatworkの返信下書きを作って」
 
-templates/user-profile.md のtone・closing・signを読んで文体を合わせて下書きを生成する。
+`{{SECRETARY_BASE_DIR}}/ユーザープロフィール.md` のtone・closing・signを読んで文体を合わせて下書きを生成する。
 下書きをチャットに表示して「これで返信してよいですか？」と確認する。
 承認後: Chatwork MCPで送信する。
 

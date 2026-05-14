@@ -24,7 +24,7 @@ mkdir -p "$HOME/.claude/plugins/cache/joshicrea/joshicrea-secretary"
 mkdir -p "$HOME/.claude/plugins"
 mkdir -p "$HOME/.claude/secretary/memory/学習ログ"
 mkdir -p "$HOME/.claude/secretary/memory/タスク"
-mkdir -p "$HOME/.claude/secretary/resources"
+mkdir -p "$HOME/.claude/secretary/素材"
 ```
 
 ---
@@ -108,7 +108,7 @@ import pathlib, shutil
 home = pathlib.Path.home()
 install = home / ".claude/plugins/cache/joshicrea/joshicrea-secretary"
 sha_dir = sorted(install.iterdir())[-1]
-templates_dir = sha_dir / "templates"
+templates_dir = sha_dir / "テンプレート"
 secretary_base = home / ".claude/secretary"
 if templates_dir.exists():
     for tmpl in templates_dir.iterdir():
@@ -184,8 +184,8 @@ import pathlib
 home = pathlib.Path.home()
 ok = True
 checks = [
-    home / ".claude/rules/secretary.md",
-    home / ".claude/secretary/user-profile.md",
+    home / ".claude/rules/秘書.md",
+    home / ".claude/secretary/ユーザープロフィール.md",
 ]
 for f in checks:
     if f.exists():
@@ -194,9 +194,9 @@ for f in checks:
         print(f"NG: {f} が見つかりません")
         ok = False
 if ok:
-    sec = (home / ".claude/rules/secretary.md").read_text(encoding="utf-8")
+    sec = (home / ".claude/rules/秘書.md").read_text(encoding="utf-8")
     if "{{SECRETARY_BASE_DIR}}" in sec:
-        print("NG: secretary.md のパス置換が不完全です")
+        print("NG: 秘書.md のパス置換が不完全です")
     else:
         print("\nインストール完了！Claude Code を再起動してから「はじめまして」と送ってください。")
 EOF

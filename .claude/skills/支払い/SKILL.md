@@ -1,5 +1,5 @@
 ---
-name: payment
+name: 支払い
 description: 毎月の固定費を登録してCronCreateで期限前に自動通知するスキル
 ---
 
@@ -18,7 +18,7 @@ Step 1: AskUserQuestionで以下を1問ずつ確認する:
 2. 「毎月何日が支払い日ですか？」
 3. 「金額はいくらですか？（目安でOKです）」
 
-Step 2: memory/支払い管理.md に記録する:
+Step 2: `{{SECRETARY_BASE_DIR}}/memory/支払い管理.md` に記録する:
 ```yaml
 ## [サービス名]
 due_day: 〇日
@@ -29,7 +29,7 @@ registered: YYYY-MM-DD
 
 Step 3: CronCreateで毎月支払日3日前の朝9時に通知を登録する（durable: true）:
 - cron: `0 9 [due_day-3] * *`
-- prompt: `{{SECRETARY_BASE_DIR}}/memory/支払い管理.md を読んで、[サービス名]の支払い期限が3日後（[due_day]日）に迫っています。金額は[amount]円です。ユーザーに通知してください。`
+- prompt: `{{SECRETARY_BASE_DIR}}/`{{SECRETARY_BASE_DIR}}/memory/支払い管理.md` を読んで、[サービス名]の支払い期限が3日後（[due_day]日）に迫っています。金額は[amount]円です。ユーザーに通知してください。`
 
 「[サービス名]（毎月[due_day]日・[amount]円）を登録しました。支払日3日前の朝9時に通知します。」と報告する。
 
@@ -37,7 +37,7 @@ Step 3: CronCreateで毎月支払日3日前の朝9時に通知を登録する（
 
 ## 「支払い一覧」「固定費を見せて」「今月の支払いは？」
 
-memory/支払い管理.md を読んで一覧表示する:
+`{{SECRETARY_BASE_DIR}}/memory/支払い管理.md` を読んで一覧表示する:
 
 ```
 【毎月の固定費】
@@ -53,7 +53,7 @@ memory/支払い管理.md を読んで一覧表示する:
 
 ## 「〇〇の支払いを削除して」「〇〇は解約した」
 
-memory/支払い管理.md から該当項目を削除する。削除前に必ずReadで確認してから編集する。
+`{{SECRETARY_BASE_DIR}}/memory/支払い管理.md` から該当項目を削除する。削除前に必ずReadで確認してから編集する。
 CronCreateで登録したジョブも削除する（CronDeleteを使用）。
 
 ---
@@ -68,7 +68,7 @@ CronCreateで登録したジョブも削除する（CronDeleteを使用）。
 
 ## 品質チェックリスト
 
-- [ ] memory/支払い管理.md に記録している
+- [ ] `{{SECRETARY_BASE_DIR}}/memory/支払い管理.md` に記録している
 - [ ] CronCreateで通知を登録している（durable: true）
 - [ ] 支払日3日前のcron式が正しい
 - [ ] 登録完了を報告している

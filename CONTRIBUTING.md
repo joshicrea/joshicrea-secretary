@@ -1,17 +1,17 @@
 # 開発ルール (CONTRIBUTING.md)
 
 このリポジトリに新しいスキル・ルール・機能を追加するときのルール。
-**全ルールは `tools/validate_paths.py` で自動チェックされる。コミット前に必ず通過させること。**
+**全ルールは `ツール/パス検証.py` で自動チェックされる。コミット前に必ず通過させること。**
 
 ---
 
 ## セットアップ（初回のみ）
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools/setup-hooks.ps1
+powershell -ExecutionPolicy Bypass -File ツール/フック設定.ps1
 ```
 
-これで `git commit` のたびに `validate_paths.py` が自動実行される。
+これで `git commit` のたびに `パス検証.py` が自動実行される。
 
 ---
 
@@ -29,8 +29,8 @@ Claude Code のプラグインシステムでは、キャッシュ内の `.claud
 |---|---|
 | `` `.setup-status` `` | `` `{{SECRETARY_BASE_DIR}}/.setup-status` `` |
 | `` `memory/タスク/` `` | `` `{{SECRETARY_BASE_DIR}}/memory/タスク/` `` |
-| `` `templates/user-profile.md` `` | `` `{{SECRETARY_BASE_DIR}}/user-profile.md` `` |
-| `` `resources/backup/` `` | `` `{{SECRETARY_BASE_DIR}}/resources/backup/` `` |
+| `` `テンプレート/ユーザープロフィール.md` `` | `` `{{SECRETARY_BASE_DIR}}/ユーザープロフィール.md` `` |
+| `` `素材/backup/` `` | `` `{{SECRETARY_BASE_DIR}}/素材/backup/` `` |
 
 ### SKILL.md での注意
 
@@ -38,7 +38,7 @@ SKILL.md はキャッシュ内から Skill ツールが読む。
 `install.ps1` がキャッシュ内の SKILL.md に対しても `{{SECRETARY_BASE_DIR}}` 置換を実行する。
 **相対パス禁止・プレースホルダー使用のルールは同じ。**
 
-新しいスキルを作るときは `tools/templates/SKILL-template.md` をコピーして使う。
+新しいスキルを作るときは `ツール/テンプレート/スキルテンプレート.md` をコピーして使う。
 
 ---
 
@@ -64,7 +64,7 @@ iwr https://example.com/script.ps1 | iex
 (iwr https://example.com/script.ps1 -UseBasicParsing).Content | iex
 ```
 
-`validate_paths.py` がこのパターンを自動検出する。
+`パス検証.py` がこのパターンを自動検出する。
 
 ---
 
@@ -80,9 +80,9 @@ iwr https://example.com/script.ps1 | iex
 
 `install.ps1` は末尾で以下を自動検証する:
 
-- `~/.claude/rules/secretary.md` が存在するか
-- `~/.claude/secretary/user-profile.md` が存在するか
-- `~/.claude/rules/secretary.md` に `{{SECRETARY_BASE_DIR}}` が残っていないか
+- `~/.claude/rules/秘書.md` が存在するか
+- `~/.claude/secretary/ユーザープロフィール.md` が存在するか
+- `~/.claude/rules/秘書.md` に `{{SECRETARY_BASE_DIR}}` が残っていないか
 
 検証失敗時は `exit 1` でインストールを中断する。
 
@@ -91,11 +91,11 @@ iwr https://example.com/script.ps1 | iex
 ## コミット前チェック
 
 ```bash
-python3 tools/validate_paths.py
+python3 ツール/パス検証.py
 ```
 
 全チェック通過（exit 0）を確認してからコミットする。
-`tools/setup-hooks.ps1` を実行済みであれば自動実行される。
+`ツール/フック設定.ps1` を実行済みであれば自動実行される。
 
 ---
 
@@ -113,7 +113,7 @@ GitHub (joshicrea/joshicrea-secretary)
        └─ インストール後検証（失敗したら exit 1）
 
 Claude Code 起動時:
-  ~/.claude/rules/*.md が自動読み込み → secretary.md が秘書ルールを定義
+  ~/.claude/rules/*.md が自動読み込み → 秘書.md が秘書ルールを定義
   Skill ツール呼び出し時:
     キャッシュ内の SKILL.md が読み込まれる（{{SECRETARY_BASE_DIR}} 置換済み）
 ```

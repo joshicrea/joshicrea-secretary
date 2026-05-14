@@ -135,6 +135,49 @@ $RulesDir      = [IO.Path]::Combine($ClaudeDir, "rules")
 $SecretaryBase = [IO.Path]::Combine($ClaudeDir, "secretary")
 New-Item -ItemType Directory -Force -Path $RulesDir | Out-Null
 
+# --- 既存ユーザー向けマイグレーション（旧英語名 → 新日本語名）---
+# 旧バージョンからのアップグレード時のみ実行。新規ユーザーには無害。
+$migrationsRules = @(
+    @{ Old = "secretary.md"; New = "秘書.md" },
+    @{ Old = "work-tools.md"; New = "使用ツール.md" }
+)
+foreach ($m in $migrationsRules) {
+    $oldPath = [IO.Path]::Combine($RulesDir, $m.Old)
+    $newPath = [IO.Path]::Combine($RulesDir, $m.New)
+    if ((Test-Path $oldPath) -and (-not (Test-Path $newPath))) {
+        Move-Item $oldPath $newPath -Force -ErrorAction SilentlyContinue
+    } elseif ((Test-Path $oldPath) -and (Test-Path $newPath)) {
+        # 両方ある場合は旧ファイルを削除（新ファイルが正）
+        Remove-Item $oldPath -Force -ErrorAction SilentlyContinue
+    }
+}
+$migrationsSecretary = @(
+    @{ Old = "user-profile.md"; New = "ユーザープロフィール.md" },
+    @{ Old = "work-tools.md"; New = "使用ツール.md" },
+    @{ Old = "resources"; New = "素材" }
+)
+if (Test-Path $SecretaryBase) {
+    foreach ($m in $migrationsSecretary) {
+        $oldPath = [IO.Path]::Combine($SecretaryBase, $m.Old)
+        $newPath = [IO.Path]::Combine($SecretaryBase, $m.New)
+        if ((Test-Path $oldPath) -and (-not (Test-Path $newPath))) {
+            Move-Item $oldPath $newPath -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+# 旧スキルディレクトリの削除（新スキルは新名でキャッシュから供給されるため、ユーザー側にあるなら旧キャッシュ）
+# ~/.claude/skills/ 配下に古い英語名スキルが残っている場合は削除する
+$UserSkillsDir = [IO.Path]::Combine($ClaudeDir, "skills")
+$oldSkillNames = @("secretary","document","expense","goal","habit","memo","monthly-summary","payment","schedule","skill-creator","task")
+if (Test-Path $UserSkillsDir) {
+    foreach ($name in $oldSkillNames) {
+        $oldSkillPath = [IO.Path]::Combine($UserSkillsDir, $name)
+        if (Test-Path $oldSkillPath) {
+            Remove-Item $oldSkillPath -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
 # rulesファイルをコピー（{{SECRETARY_BASE_DIR}}を実際のパスに置換）
 $SourceRulesDir = [IO.Path]::Combine($InstallPath, ".claude", "rules")
 foreach ($rulesFile in (Get-ChildItem $SourceRulesDir -Filter "*.md" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name)) {
@@ -162,17 +205,25 @@ Write-Host "ルールファイルとスキルを設定しました"
 $dirsToCreate = @(
     [IO.Path]::Combine($SecretaryBase, "memory", "学習ログ"),
     [IO.Path]::Combine($SecretaryBase, "memory", "タスク"),
-    [IO.Path]::Combine($SecretaryBase, "resources")
+    [IO.Path]::Combine($SecretaryBase, "素材")
 )
 foreach ($dir in $dirsToCreate) {
     New-Item -ItemType Directory -Force -Path $dir | Out-Null
 }
 
 # テンプレートをコピー（初回のみ・既存データを上書きしない）
-$TemplatesDir = [IO.Path]::Combine($InstallPath, "templates")
+# 旧パス（templates/）と新パス（テンプレート/）の両方を試行する
+$TemplatesDir = [IO.Path]::Combine($InstallPath, "テンプレート")
+if (-not (Test-Path $TemplatesDir)) {
+    $TemplatesDir = [IO.Path]::Combine($InstallPath, "templates")
+}
 if (Test-Path $TemplatesDir) {
     Get-ChildItem $TemplatesDir -File | ForEach-Object {
-        $destFile = [IO.Path]::Combine($SecretaryBase, $_.Name)
+        # 旧ファイル名 user-profile.md / work-tools.md は新ファイル名にマップする
+        $destName = $_.Name
+        if ($destName -eq "user-profile.md") { $destName = "ユーザープロフィール.md" }
+        elseif ($destName -eq "work-tools.md") { $destName = "使用ツール.md" }
+        $destFile = [IO.Path]::Combine($SecretaryBase, $destName)
         if (-not (Test-Path $destFile)) {
             Copy-Item $_.FullName $destFile -Force
         }
@@ -182,8 +233,8 @@ Write-Host "データフォルダを準備しました"
 
 # --- インストール後の検証 ---
 $verifyOk    = $true
-$secMdPath   = [IO.Path]::Combine($RulesDir, "secretary.md")
-$profilePath = [IO.Path]::Combine($SecretaryBase, "user-profile.md")
+$secMdPath   = [IO.Path]::Combine($RulesDir, "秘書.md")
+$profilePath = [IO.Path]::Combine($SecretaryBase, "ユーザープロフィール.md")
 $requiredFiles = @($secMdPath, $profilePath)
 
 foreach ($f in $requiredFiles) {
@@ -192,10 +243,10 @@ foreach ($f in $requiredFiles) {
         $verifyOk = $false
     }
 }
-# secretary.mdにプレースホルダーが残っていないか確認
+# 秘書.mdにプレースホルダーが残っていないか確認
 $secContent = [System.IO.File]::ReadAllText($secMdPath, [System.Text.Encoding]::UTF8)
 if ($secContent.Contains("{{SECRETARY_BASE_DIR}}")) {
-    Write-Host "エラー: secretary.mdのパス置換が不完全です"
+    Write-Host "エラー: 秘書.mdのパス置換が不完全です"
     $verifyOk = $false
 }
 if (-not $verifyOk) {

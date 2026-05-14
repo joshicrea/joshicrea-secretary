@@ -105,6 +105,34 @@ RULES_DIR      = CLAUDE_DIR / "rules"
 SECRETARY_BASE = CLAUDE_DIR / "secretary"
 RULES_DIR.mkdir(parents=True, exist_ok=True)
 
+# --- 既存ユーザー向けマイグレーション（旧英語名 → 新日本語名）---
+def _migrate(old_path: pathlib.Path, new_path: pathlib.Path):
+    if old_path.exists() and not new_path.exists():
+        old_path.rename(new_path)
+    elif old_path.exists() and new_path.exists():
+        # 両方ある場合は旧を削除（新が正）
+        if old_path.is_file():
+            old_path.unlink()
+        else:
+            shutil.rmtree(old_path, ignore_errors=True)
+
+# rules ファイルの移行
+_migrate(RULES_DIR / "secretary.md", RULES_DIR / "秘書.md")
+_migrate(RULES_DIR / "work-tools.md", RULES_DIR / "使用ツール.md")
+# secretary 配下のデータ移行
+if SECRETARY_BASE.exists():
+    _migrate(SECRETARY_BASE / "user-profile.md", SECRETARY_BASE / "ユーザープロフィール.md")
+    _migrate(SECRETARY_BASE / "work-tools.md", SECRETARY_BASE / "使用ツール.md")
+    _migrate(SECRETARY_BASE / "resources", SECRETARY_BASE / "素材")
+# 旧英語名スキルの削除（新スキルはキャッシュから供給される）
+USER_SKILLS_DIR = CLAUDE_DIR / "skills"
+OLD_SKILL_NAMES = ["secretary","document","expense","goal","habit","memo","monthly-summary","payment","schedule","skill-creator","task"]
+if USER_SKILLS_DIR.exists():
+    for name in OLD_SKILL_NAMES:
+        old_skill = USER_SKILLS_DIR / name
+        if old_skill.exists():
+            shutil.rmtree(old_skill, ignore_errors=True)
+
 SOURCE_RULES_DIR = INSTALL_PATH / ".claude" / "rules"
 for rules_file in SOURCE_RULES_DIR.glob("*.md"):
     content = rules_file.read_text(encoding="utf-8")
@@ -122,15 +150,24 @@ for skill_md in SOURCE_SKILLS_DIR.rglob("SKILL.md"):
 print("ルールファイルとスキルを設定しました")
 
 # --- データディレクトリを作成 ---
-for sub in ["memory/学習ログ", "memory/タスク", "resources"]:
+for sub in ["memory/学習ログ", "memory/タスク", "素材"]:
     (SECRETARY_BASE / sub).mkdir(parents=True, exist_ok=True)
 
 # テンプレートをコピー（初回のみ・既存データを上書きしない）
-TEMPLATES_DIR = INSTALL_PATH / "templates"
+# 旧パス（templates/）と新パス（テンプレート/）の両方を試行する
+TEMPLATES_DIR = INSTALL_PATH / "テンプレート"
+if not TEMPLATES_DIR.exists():
+    TEMPLATES_DIR = INSTALL_PATH / "templates"
+
+_TEMPLATE_NAME_MAP = {
+    "user-profile.md": "ユーザープロフィール.md",
+    "work-tools.md": "使用ツール.md",
+}
 if TEMPLATES_DIR.exists():
     for tmpl in TEMPLATES_DIR.iterdir():
         if tmpl.is_file():
-            dest = SECRETARY_BASE / tmpl.name
+            dest_name = _TEMPLATE_NAME_MAP.get(tmpl.name, tmpl.name)
+            dest = SECRETARY_BASE / dest_name
             if not dest.exists():
                 shutil.copy(str(tmpl), str(dest))
 
@@ -138,8 +175,8 @@ print("データフォルダを準備しました")
 
 # --- インストール後の検証 ---
 verify_ok   = True
-sec_md_path = RULES_DIR / "secretary.md"
-profile_path = SECRETARY_BASE / "user-profile.md"
+sec_md_path = RULES_DIR / "秘書.md"
+profile_path = SECRETARY_BASE / "ユーザープロフィール.md"
 
 for f in [sec_md_path, profile_path]:
     if not f.exists():
@@ -148,7 +185,7 @@ for f in [sec_md_path, profile_path]:
 
 if sec_md_path.exists():
     if "{{SECRETARY_BASE_DIR}}" in sec_md_path.read_text(encoding="utf-8"):
-        print("エラー: secretary.mdのパス置換が不完全です")
+        print("エラー: 秘書.mdのパス置換が不完全です")
         verify_ok = False
 
 if not verify_ok:

@@ -1,5 +1,5 @@
 ---
-name: 振り返り
+name: 週次レビュー
 description: 週の振り返りと来週の優先事項を整理する
 ---
 
@@ -16,7 +16,7 @@ description: 週の振り返りと来週の優先事項を整理する
 
 ### Step 1: 事前確認
 
-`{{SECRETARY_BASE_DIR}}/user-profile.md` を読んでユーザーの事業・目標を把握する。
+`{{SECRETARY_BASE_DIR}}/ユーザープロフィール.md` を読んでユーザーの事業・目標を把握する。
 
 Google Calendarが連携されている場合:
 `mcp__claude_ai_Google_Calendar__list_events` で今週の予定を取得する。

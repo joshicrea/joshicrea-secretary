@@ -12,8 +12,8 @@ from pathlib import Path
 
 
 def get_config():
-    """user-profile.mdからObsidian設定を読む"""
-    profile_path = Path(__file__).parent.parent / "templates" / "user-profile.md"
+    """ユーザープロフィール.mdからObsidian設定を読む"""
+    profile_path = Path(__file__).parent.parent / "テンプレート" / "ユーザープロフィール.md"
     if not profile_path.exists():
         return {"obsidian": False, "obsidian_path": None}
 

@@ -4,8 +4,8 @@ joshicrea-secretary 開発時バリデーター
 コミット前に実行して問題を検出する
 
 使い方:
-  python3 tools/validate_paths.py
-  git commit 前に自動実行: tools/setup-hooks.ps1 を実行してください
+  python3 ツール/パス検証.py
+  git commit 前に自動実行: ツール/フック設定.ps1 を実行してください
 """
 import os, sys, re
 
@@ -17,12 +17,14 @@ PLACEHOLDER = "{{SECRETARY_BASE_DIR}}"
 # ----------------------------------------------------------------
 RELATIVE_PATH_PATTERNS = [
     r"`\.setup-status`",
+    r"`テンプレート/[^`]+`",
     r"`templates/[^`]+`",
     r"`memory/[^`]+`",
+    r"`素材/[^`]+`",
     r"`resources/[^`]+`",
 ]
 
-SKIP_FILES_MD = {"validate_paths.py", "README.md", "ARCHITECTURE.md", "CONTRIBUTING.md", "SKILL-template.md"}
+SKIP_FILES_MD = {"パス検証.py", "validate_paths.py", "README.md", "ARCHITECTURE.md", "CONTRIBUTING.md", "SKILL-template.md", "スキルテンプレート.md", "コンテンツスキルテンプレート.md", "CONTENT-SKILL-template.md"}
 SKIP_DIRS = {".git", "node_modules"}
 
 def check_md_relative_paths():
@@ -65,7 +67,7 @@ PS1_FORBIDDEN = [
      "Get-Content -Path $path -Encoding UTF8 または [System.IO.File]::ReadAllText を使う"),
 ]
 
-SKIP_FILES_PS1 = {"setup-hooks.ps1"}
+SKIP_FILES_PS1 = {"フック設定.ps1", "setup-hooks.ps1"}
 
 def check_ps1_patterns():
     issues = []
