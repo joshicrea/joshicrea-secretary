@@ -12,6 +12,16 @@
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
+# TLS 1.2 を明示的に有効化 for Windows PowerShell 5.1
+try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch {}
+
+# winget 不在検知
+if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+    Write-Host "winget が見つかりません。Microsoft Storeで「アプリ インストーラー」を更新してください:"
+    Write-Host "https://www.microsoft.com/p/app-installer/9nblggh4nns1"
+    exit 1
+}
+
 Write-Host ""
 Write-Host "AI秘書プラグインをインストールしています..."
 Write-Host ""
