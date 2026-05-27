@@ -18,16 +18,37 @@ Gmail・Google Calendar・タスクを並列で確認して1回でまとめて�
 
 ### 実行手順
 
+#### Step 0: プロフィールを読んで有効な連携を確認する
+
+`{{SECRETARY_BASE_DIR}}/ユーザープロフィール.md` を Read して以下のフラグを確認する:
+- `gcal_verified` — Google Calendar が有効かどうか
+- `gmail_verified` — Gmail が有効かどうか
+- `custom_email_verified` — 独自ドメインメールが有効かどうか
+- `chatwork_verified` — Chatwork が有効かどうか
+- `weather_verified` / `weather_lat` / `weather_lon` — 天気が有効かどうか
+
+`false` のものは取得をスキップする。`true` のものだけ Step 1 で取得する。
+
 #### Step 1: 並列取得（同時に実行する）
 
-以下を同時に取得する（順番に実行しない）:
+有効な連携のみ取得する（順番に実行しない）:
 
-- **Gmail**: `mcp__claude_ai_Gmail__search_threads` で未読メールを取得
+- **Gmail** (`gmail_verified: true` の場合): `mcp__claude_ai_Gmail__search_threads` で未読メールを取得
   ```
   query: "is:unread"
   maxResults: 30
   ```
-- **Google Calendar**: `mcp__claude_ai_Google_Calendar__list_events` で今日・明日の予定を取得
+- **Google Calendar** (`gcal_verified: true` の場合): `mcp__claude_ai_Google_Calendar__list_events` で今日・明日の予定を取得
+- **独自ドメインメール** (`custom_email_verified: true` の場合): `search_emails` ツールで `unread_only: true`, `limit: 20` で取得
+- **Chatwork** (`chatwork_verified: true` の場合): Bash で以下を実行して未読ルームを取得する:
+  ```
+  curl -s -H "X-ChatWorkToken: <chatwork_token>" https://api.chatwork.com/v2/rooms
+  ```
+  未読件数 (`unread_num` > 0) のルームのみ報告対象にする
+- **天気** (`weather_verified: true` の場合): Bash で Open-Meteo API を呼んで今日の天気を取得する:
+  ```
+  https://api.open-meteo.com/v1/forecast?latitude=<weather_lat>&longitude=<weather_lon>&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Asia/Tokyo&forecast_days=1
+  ```
 - **タスク**: `{{SECRETARY_BASE_DIR}}/memory/タスク/` フォルダに pending ファイルがあれば Read で取得
 - **フォローアップ**: タスクの中で `followup` の日付が今日以前のものを抽出する
 - **定型文**: `{{SECRETARY_BASE_DIR}}/memory/定型文.md` が存在すれば Read で取得する
@@ -47,14 +68,26 @@ Gmail・Google Calendar・タスクを並列で確認して1回でまとめて�
 
 #### Step 3: 報告フォーマット
 
+有効な連携のセクションだけ出力する。該当なし・無効のセクションは省略する。
+
 ```
 おはようございます。朝の確認が完了しました。
 
-【メール】要対応 N件
+【天気】（weather_verified: true の場合のみ）
+今日の <場所>: <天気概要> <最高気温>/<最低気温>
+
+【Gmail】要対応 N件 （gmail_verified: true の場合のみ）
 1. [送信者] [件名の要約]
    → 推奨: 〇〇と返信する
 
-【今日の予定】
+【独自メール】要対応 N件 （custom_email_verified: true の場合のみ）
+1. [送信者] [件名の要約]
+   → 推奨: 〇〇と返信する
+
+【Chatwork】未読あり N件 （chatwork_verified: true の場合のみ）
+- [ルーム名] 未読 N件
+
+【今日の予定】 （gcal_verified: true の場合のみ）
 - HH:MM [予定名]
 - HH:MM [予定名]
 
@@ -291,7 +324,9 @@ Gmail確認 → カレンダー確認の順番に実行しない。同時に取�
 
 ## 品質チェックリスト（全項目○でなければ報告しない）
 
-- [ ] Gmail・カレンダー・タスクを実際にツールで取得した
+- [ ] ユーザープロフィール.md を読んで verified フラグを確認した
+- [ ] verified: false の連携は取得をスキップした（他人のデータを取得していない）
+- [ ] 有効な連携のみ実際にツールで取得した
 - [ ] 要対応と不要の分類が正しい（広告・自動通知が混入していない）
 - [ ] 各メールに推奨対応が添えられている
 - [ ] 送信操作をしていない（下書きまでで止まっている）

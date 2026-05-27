@@ -211,6 +211,25 @@ Get-ChildItem $SourceSkillsDir -Recurse -Filter "SKILL.md" -ErrorAction Silently
 }
 Write-Host "ルールファイルとスキルを設定しました"
 
+# --- email-mcp を展開して依存関係をインストール ---
+$EmailMcpSrc = [IO.Path]::Combine($InstallPath, "ツール", "email-mcp")
+$EmailMcpDst = [IO.Path]::Combine($SecretaryBase, "ツール", "email-mcp")
+if (Test-Path $EmailMcpSrc) {
+    if (-not (Test-Path $EmailMcpDst)) {
+        New-Item -ItemType Directory -Force -Path $EmailMcpDst | Out-Null
+    }
+    Copy-Item ([IO.Path]::Combine($EmailMcpSrc, "index.js"))      $EmailMcpDst -Force
+    Copy-Item ([IO.Path]::Combine($EmailMcpSrc, "package.json"))  $EmailMcpDst -Force
+    if (Get-Command npm -ErrorAction SilentlyContinue) {
+        Push-Location $EmailMcpDst
+        npm install --silent 2>&1 | Out-Null
+        Pop-Location
+        Write-Host "email-mcp の依存パッケージをインストールしました"
+    } else {
+        Write-Host "警告: npm が見つかりません。独自ドメインメール連携を使う場合は Node.js をインストールしてください: https://nodejs.org/"
+    }
+}
+
 # --- データディレクトリを作成 ---
 $dirsToCreate = @(
     [IO.Path]::Combine($SecretaryBase, "memory", "学習ログ"),
