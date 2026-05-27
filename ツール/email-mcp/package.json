@@ -1,0 +1,12 @@
+{
+  "name": "secretary-email-mcp",
+  "version": "1.0.0",
+  "description": "AI秘書用 IMAP/SMTPメールMCPサーバー",
+  "type": "module",
+  "main": "index.js",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "imapflow": "^1.0.169",
+    "nodemailer": "^6.9.15"
+  }
+}
