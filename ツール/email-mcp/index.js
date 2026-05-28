@@ -5,6 +5,10 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { ImapFlow } from "imapflow";
+import nodemailer from "nodemailer";
+
+const SMTP_HOST = process.env.SMTP_HOST || "";
+const SMTP_PORT = parseInt(process.env.SMTP_PORT || "465");
 
 const IMAP_HOST = process.env.IMAP_HOST || "";
 const IMAP_PORT = parseInt(process.env.IMAP_PORT || "993");
@@ -48,6 +52,27 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           uid: { type: "string", description: "メールUID" },
         },
         required: ["uid"],
+      },
+    },
+    {
+      name: "send_email",
+      description: "メールを送信する（返信・新規送信）",
+      inputSchema: {
+        type: "object",
+        properties: {
+          to: { type: "string", description: "送信先メールアドレス" },
+          subject: { type: "string", description: "件名" },
+          body: { type: "string", description: "本文（プレーンテキスト）" },
+          reply_to_uid: {
+            type: "string",
+            description: "返信対象メールのUID（返信の場合）",
+          },
+          from_address: {
+            type: "string",
+            description: "送信元アドレス（省略時は EMAIL_USER を使用）",
+          },
+        },
+        required: ["to", "subject", "body"],
       },
     },
   ],
@@ -139,6 +164,55 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     } catch (err) {
       return {
         content: [{ type: "text", text: `エラー: ${err.message}` }],
+        isError: true,
+      };
+    }
+  }
+
+  if (name === "send_email") {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: SMTP_HOST,
+        port: SMTP_PORT,
+        secure: SMTP_PORT === 465,
+        auth: { user: EMAIL_USER, pass: EMAIL_PASS },
+      });
+
+      const from = args.from_address || EMAIL_USER;
+
+      // 返信の場合は元メールの件名に Re: を付与（すでに付いていれば付けない）
+      let subject = args.subject;
+      if (
+        args.reply_to_uid &&
+        !subject.startsWith("Re:") &&
+        !subject.startsWith("RE:")
+      ) {
+        subject = `Re: ${subject}`;
+      }
+
+      await transporter.sendMail({
+        from,
+        to: args.to,
+        subject,
+        text: args.body,
+      });
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              success: true,
+              to: args.to,
+              subject,
+              from,
+            }),
+          },
+        ],
+      };
+    } catch (err) {
+      return {
+        content: [{ type: "text", text: `送信エラー: ${err.message}` }],
         isError: true,
       };
     }
