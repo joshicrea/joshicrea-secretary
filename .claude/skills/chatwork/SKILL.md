@@ -18,7 +18,7 @@ description: Chatworkのメッセージ確認・返信案作成・「送って�
 
 ---
 
-## 「Chatwork見て」「CW確認して」
+## 「Chatwork」「チャットワーク」「CW」「Chatwork見て」「CW確認して」「CW見て」
 
 Step 1: Chatwork MCPで未読メッセージを取得する。
 
