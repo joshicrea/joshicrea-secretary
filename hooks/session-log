@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# セッションログhook ラッパー (joshicrea-secretary)
+# run-hook.cmd 経由で UserPromptSubmit / Stop から呼ばれる。
+# python3(または python) で session_log.py を実行する。
+# Python が無い環境では静かに終了し、ツール本体には一切影響させない。
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+EVENT="${1:-}"
+
+if command -v python3 >/dev/null 2>&1; then
+    python3 "${SCRIPT_DIR}/session_log.py" "$EVENT" 2>/dev/null
+elif command -v python >/dev/null 2>&1; then
+    python "${SCRIPT_DIR}/session_log.py" "$EVENT" 2>/dev/null
+fi
+
+exit 0
