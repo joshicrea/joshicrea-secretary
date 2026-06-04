@@ -193,3 +193,10 @@ AI秘書は定期的に改善されます。AI秘書に「**アップデート�
 | Git | 2.40以降 |
 
 > 動作確認は定期的に実施しています。環境の違いによってセットアップが進まない場合は、AI秘書に「うまくいかない」と話しかけてください。
+
+---
+
+## ドキュメント
+
+- [AI秘書_マニュアル](https://docs.google.com/document/d/1xcKQD0MIVrmhCeohN70gYwm3CVMNlQu63TDWFz8kB54/edit?tab=t.0)
+- [AI秘書_仕様書](https://docs.google.com/document/d/1gvsyfqV0eOCvxsklZzl_21_vOyQ14D_NXzU80WVKIUo/edit?tab=t.0)
