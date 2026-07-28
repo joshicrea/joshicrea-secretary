@@ -58,7 +58,7 @@ obsidian_vault:
 - [ ] **Step 3: コミット**
 
 ```bash
-cd "c:/Users/hayas/OneDrive/デスクトップ/git/販売ツール/AI秘書"
+cd "{{WORKSPACE_ROOT}}/販売ツール/AI秘書"
 git add "テンプレート/ユーザープロフィール.md"
 git commit -m "feat(secretary): 連携設定フィールドを5統合対応に拡張"
 ```
@@ -222,7 +222,7 @@ await server.connect(transport);
 - [ ] **Step 3: コミット**
 
 ```bash
-cd "c:/Users/hayas/OneDrive/デスクトップ/git/販売ツール/AI秘書"
+cd "{{WORKSPACE_ROOT}}/販売ツール/AI秘書"
 git add "ツール/email-mcp/package.json" "ツール/email-mcp/index.js"
 git commit -m "feat(secretary): IMAP/SMTP email-mcp サーバーを追加"
 ```
@@ -264,7 +264,7 @@ if (Test-Path $EmailMcpSrc) {
 - [ ] **Step 2: コミット**
 
 ```bash
-cd "c:/Users/hayas/OneDrive/デスクトップ/git/販売ツール/AI秘書"
+cd "{{WORKSPACE_ROOT}}/販売ツール/AI秘書"
 git add install.ps1
 git commit -m "feat(secretary): install.ps1 に email-mcp コピー処理を追加"
 ```
@@ -498,7 +498,7 @@ weather_verified: true
 - [ ] **Step 2: コミット**
 
 ```bash
-cd "c:/Users/hayas/OneDrive/デスクトップ/git/販売ツール/AI秘書"
+cd "{{WORKSPACE_ROOT}}/販売ツール/AI秘書"
 git add ".claude/rules/秘書.md"
 git commit -m "feat(secretary): セットアップ ④ を5統合の連携設定メニューに置き換え"
 ```
@@ -584,7 +584,7 @@ SKILL.md の `#### Step 1: 並列取得（同時に実行する）` ブロック
 - [ ] **Step 3: コミット**
 
 ```bash
-cd "c:/Users/hayas/OneDrive/デスクトップ/git/販売ツール/AI秘書"
+cd "{{WORKSPACE_ROOT}}/販売ツール/AI秘書"
 git add ".claude/skills/秘書/SKILL.md"
 git commit -m "feat(secretary): 朝ブリーフィングを verified フラグ対応・5統合に拡張"
 ```
@@ -623,6 +623,6 @@ https://raw.githubusercontent.com/joshicrea/joshicrea-secretary/master/install.p
 - [ ] **Step 5: git push して GitHub に反映する**
 
 ```bash
-cd "c:/Users/hayas/OneDrive/デスクトップ/git/販売ツール/AI秘書"
+cd "{{WORKSPACE_ROOT}}/販売ツール/AI秘書"
 git push origin master
 ```

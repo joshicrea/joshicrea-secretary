@@ -9,3 +9,10 @@ install.py text eol=lf
 # PowerShell は CRLF
 *.ps1 text eol=crlf
 *.cmd text eol=crlf
+
+# 配布ZIP（GitHubのarchive）に含めない開発用ファイル
+# install は master.zip をダウンロードして展開するため、export-ignore が効く。
+# ただしこれ1本に頼らず、開発ドキュメント側の個人パスもサニタイズしてある（二重の防御）。
+docs/ export-ignore
+CONTRIBUTING.md export-ignore
+.gitattributes export-ignore
