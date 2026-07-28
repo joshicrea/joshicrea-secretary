@@ -1,16 +1,48 @@
 #!/usr/bin/env bash
 # SessionStart hook for joshicrea-secretary plugin
 # Injects AI secretary instructions into every session context.
+#
+# 2026-07-28 修正:
+#  - JSON エスケープが2回かかっており、改行が「\n」というリテラル2文字になっていた。
+#    その結果 CLAUDE.md 全文が改行ゼロの1行の塊として渡り、見出し・表・箇条書きの
+#    構造が全て失われていた（実測: 実改行0 / リテラル \n 82個）。
+#    → プレフィックスを実改行で組み、エスケープは最後の1回だけにした。
+#  - printf のフォーマット文字列にデータを渡していたため、CLAUDE.md に % が1文字でも
+#    入ると出力が壊れる状態だった。→ フォーマットとデータを分離した。
+#  - トップレベルの additionalContext を重複出力していた。→ 公式スキーマ位置のみにした。
+#  - CLAUDE.md が読めないとき "Error reading CLAUDE.md" という文字列を「あなたの動作指示」
+#    として注入していた。→ 読めなければ注入せず終了する。
+#  - 失敗が完全に無音だった。→ fail-open は維持しつつエラーログに残す。
 
-set -euo pipefail
+set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+CLAUDE_MD="${PLUGIN_ROOT}/CLAUDE.md"
+ERROR_LOG="${HOME}/.claude/secretary/logs/hook_errors.log"
 
-# Read the main secretary instructions from CLAUDE.md
-secretary_content=$(cat "${PLUGIN_ROOT}/CLAUDE.md" 2>&1 || echo "Error reading CLAUDE.md")
+log_error() {
+    # fail-open でも無音にしない。失敗を後から観測できるようにする。
+    mkdir -p "$(dirname "$ERROR_LOG")" 2>/dev/null || return 0
+    printf '%s session-start: %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$1" >> "$ERROR_LOG" 2>/dev/null || true
+}
 
-# JSON escape
+if [ ! -r "$CLAUDE_MD" ]; then
+    log_error "CLAUDE.md が読めません: ${CLAUDE_MD}"
+    exit 0
+fi
+
+secretary_content=$(cat "$CLAUDE_MD") || {
+    log_error "CLAUDE.md の読み込みに失敗しました: ${CLAUDE_MD}"
+    exit 0
+}
+
+if [ -z "$secretary_content" ]; then
+    log_error "CLAUDE.md が空です: ${CLAUDE_MD}"
+    exit 0
+fi
+
+# JSON エスケープ（この関数の適用は1回だけ）
 escape_for_json() {
     local s="$1"
     s="${s//\\/\\\\}"
@@ -21,12 +53,18 @@ escape_for_json() {
     printf '%s' "$s"
 }
 
-secretary_escaped=$(escape_for_json "$secretary_content")
+# プレフィックスは実改行で組む（"\n" のリテラルを書かない）
+session_context="<EXTREMELY_IMPORTANT>
+You are an AI secretary (joshicrea-secretary plugin is active).
 
-session_context="<EXTREMELY_IMPORTANT>\nYou are an AI secretary (joshicrea-secretary plugin is active).\n\n**The following are your operating instructions. Follow them exactly:**\n\n${secretary_escaped}\n</EXTREMELY_IMPORTANT>"
+The following are your operating instructions. Follow them exactly:
+
+${secretary_content}
+</EXTREMELY_IMPORTANT>"
 
 context_escaped=$(escape_for_json "$session_context")
 
-printf '{"hookSpecificOutput":{"additionalContext":"%s"},"additionalContext":"%s"}' \
-    "$context_escaped" \
-    "$context_escaped"
+# フォーマット文字列とデータを分離する（CLAUDE.md に % が入っても壊れない）
+printf '%s' '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"'
+printf '%s' "$context_escaped"
+printf '%s' '"}}'

@@ -24,6 +24,22 @@ BASE_DIR = Path(os.environ.get(
 ))
 NOTES_DIR = BASE_DIR / "memory" / "会話ログ"
 PROFILE_PATH = BASE_DIR / "ユーザープロフィール.md"
+ERROR_LOG = BASE_DIR / "logs" / "hook_errors.log"
+
+
+def log_error(message):
+    """fail-open は維持しつつ、失敗を後から観測できるように残す。
+
+    2026-07-28 追加: 以前は全ての例外を無言で握りつぶしており、
+    「ログが増えない」以外に異常を知る手段が無かった。
+    """
+    try:
+        ERROR_LOG.parent.mkdir(parents=True, exist_ok=True)
+        stamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with open(str(ERROR_LOG), "a", encoding="utf-8", errors="replace") as f:
+            f.write(f"{stamp} session_log.py: {message}\n")
+    except Exception:
+        pass  # ログにも書けないなら諦める。会話は止めない
 
 
 def get_obsidian_dir():
@@ -72,30 +88,71 @@ def append(text, session_id, cwd):
             ensure_header(p, session_id, cwd)
             with open(str(p), "a", encoding="utf-8") as f:
                 f.write(text)
-        except Exception:
-            pass
+        except Exception as e:
+            log_error(f"会話ログの書き込みに失敗しました ({base}): {e}")
 
 
-def extract_last_assistant(transcript):
-    for msg in reversed(transcript):
-        if msg.get("role") == "assistant":
-            content = msg.get("content", [])
-            if isinstance(content, str):
-                return content
-            if isinstance(content, list):
-                return "\n".join(
-                    b.get("text", "")
-                    for b in content
-                    if isinstance(b, dict) and b.get("type") == "text"
-                )
+def extract_text(content):
+    """メッセージの content からテキストだけを取り出す。"""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "\n".join(
+            b.get("text", "")
+            for b in content
+            if isinstance(b, dict) and b.get("type") == "text"
+        )
     return ""
+
+
+def last_assistant_from_transcript_file(transcript_path):
+    """Stop hook が渡す transcript_path（JSONL）から最後のassistant発言を取り出す。
+
+    2026-07-28 修正: 以前は data.get("transcript", []) を読んでいたが、
+    Claude Code が渡すのは transcript（配列）ではなく transcript_path（ファイルパス）。
+    そのため常に空になり、Claude側の発言が一度もログに保存されていなかった。
+    しかも例外を握りつぶす設計のため、誰も気づけない状態だった。
+    """
+    if not transcript_path:
+        return ""
+    p = Path(transcript_path)
+    if not p.exists():
+        log_error(f"transcript_path が存在しません: {transcript_path}")
+        return ""
+    text = ""
+    try:
+        with open(str(p), "r", encoding="utf-8", errors="replace") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    entry = json.loads(line)
+                except Exception:
+                    continue
+                msg = entry.get("message") if isinstance(entry.get("message"), dict) else entry
+                if msg.get("role") != "assistant":
+                    continue
+                t = extract_text(msg.get("content", [])).strip()
+                if t:
+                    text = t  # 最後に見つかったものを採用
+    except Exception as e:
+        log_error(f"transcript の読み込みに失敗しました: {e}")
+        return ""
+    return text
 
 
 def main():
     event = sys.argv[1] if len(sys.argv) > 1 else ""
     try:
+        # stdin は必ず bytes で読んで UTF-8 デコードする。
+        # sys.stdin.read() は Windows で cp932 解釈され、日本語入力でパースが壊れる。
         data = json.loads(sys.stdin.buffer.read().decode("utf-8"))
-    except Exception:
+    except Exception as e:
+        log_error(f"stdin の JSON パースに失敗しました: {e}")
+        sys.exit(0)
+    if not isinstance(data, dict):
+        log_error(f"stdin の JSON が dict ではありません: {type(data).__name__}")
         sys.exit(0)
 
     session_id = data.get("session_id", "")
@@ -107,7 +164,7 @@ def main():
         if prompt:
             append(f"\n### {ts} User\n\n{prompt}\n", session_id, cwd)
     elif event == "Stop":
-        text = extract_last_assistant(data.get("transcript", [])).strip()
+        text = last_assistant_from_transcript_file(data.get("transcript_path", "")).strip()
         if text:
             append(f"\n### {ts} Claude\n\n{text}\n", session_id, cwd)
 

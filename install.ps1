@@ -189,15 +189,51 @@ if (Test-Path $UserSkillsDir) {
 }
 
 # rulesファイルをコピー（{{SECRETARY_BASE_DIR}}を実際のパスに置換）
+# 2026-07-28 修正: 以前は元のファイル名のまま無条件に上書きしていた。
+#  - お客様が自分で置いたルールと同名なら黙って破壊する
+#  - どれがこのプラグインの置いたファイルか分からず、解約後も消せない
+# 対策: 製品プレフィックスを付ける / 既存はバックアップ / 先頭に由来マーカーを入れる
+$RulesPrefix = "AI秘書_"
+$RulesMarker = "<!-- このファイルは joshicrea-secretary プラグインが配置しました。削除するとAI秘書の出力品質ルールが無効になります。アンインストール手順はプラグイン内の アンインストール.md を参照してください。 -->`n"
+$RulesBackupDir = [IO.Path]::Combine($RulesDir, "_backup_secretary_" + (Get-Date -Format "yyyyMMddHHmmss"))
+$BackedUp = 0
+$RemovedOld = 0
+
 $SourceRulesDir = [IO.Path]::Combine($InstallPath, ".claude", "rules")
 foreach ($rulesFile in (Get-ChildItem $SourceRulesDir -Filter "*.md" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name)) {
     $SourceFile = [IO.Path]::Combine($SourceRulesDir, $rulesFile)
     if (Test-Path $SourceFile) {
         $content = [System.IO.File]::ReadAllText($SourceFile, [System.Text.Encoding]::UTF8)
         $content = $content.Replace("{{SECRETARY_BASE_DIR}}", $SecretaryBase)
-        Write-Utf8NoBom -Path ([IO.Path]::Combine($RulesDir, $rulesFile)) -Content $content
+
+        $DestName = $RulesPrefix + $rulesFile
+        $DestFile = [IO.Path]::Combine($RulesDir, $DestName)
+
+        # 既存ファイルがこのプラグイン由来でなければ退避してから書く
+        if (Test-Path $DestFile) {
+            $existing = [System.IO.File]::ReadAllText($DestFile, [System.Text.Encoding]::UTF8)
+            if (-not $existing.Contains("joshicrea-secretary")) {
+                if (-not (Test-Path $RulesBackupDir)) { New-Item -ItemType Directory -Force -Path $RulesBackupDir | Out-Null }
+                Write-Utf8NoBom -Path ([IO.Path]::Combine($RulesBackupDir, $DestName)) -Content $existing
+                $BackedUp++
+            }
+        }
+
+        Write-Utf8NoBom -Path $DestFile -Content ($RulesMarker + $content)
+
+        # 旧バージョンがプレフィックスなしで置いたファイルを掃除する
+        $LegacyFile = [IO.Path]::Combine($RulesDir, $rulesFile)
+        if (Test-Path $LegacyFile) {
+            $legacyContent = [System.IO.File]::ReadAllText($LegacyFile, [System.Text.Encoding]::UTF8)
+            if ($legacyContent.Contains("joshicrea-secretary") -or $legacyContent.Contains("{{SECRETARY_BASE_DIR}}") -or $legacyContent.Contains($SecretaryBase)) {
+                Remove-Item $LegacyFile -Force -ErrorAction SilentlyContinue
+                $RemovedOld++
+            }
+        }
     }
 }
+if ($BackedUp -gt 0) { Write-Host "  既存の同名ファイル $BackedUp 件を $RulesBackupDir に退避しました" -ForegroundColor Yellow }
+if ($RemovedOld -gt 0) { Write-Host "  旧バージョンが配置したファイル $RemovedOld 件を整理しました" -ForegroundColor Gray }
 
 # --- SKILL.md の{{SECRETARY_BASE_DIR}}をプラグインキャッシュ内で置換 ---
 # Skillツールはキャッシュ内のSKILL.mdを読む。絶対パスに置換しておかないとパスが壊れる。
@@ -258,11 +294,25 @@ if (Test-Path $TemplatesDir) {
         }
     }
 }
+# ナレッジをコピー（{{SECRETARY_BASE_DIR}}を実際のパスに置換）
+# 2026-07-28 追加: rules/秘書.md と CLAUDE.md が {{SECRETARY_BASE_DIR}}/ナレッジ/_共通プロトコル.md を
+# 参照しているのに、install がこのフォルダをコピーしておらず、参照が常に失敗していた。
+$SourceKnowledgeDir = [IO.Path]::Combine($InstallPath, ".claude", "ナレッジ")
+if (Test-Path $SourceKnowledgeDir) {
+    $DestKnowledgeDir = [IO.Path]::Combine($SecretaryBase, "ナレッジ")
+    New-Item -ItemType Directory -Force -Path $DestKnowledgeDir | Out-Null
+    Get-ChildItem $SourceKnowledgeDir -Filter "*.md" -File -ErrorAction SilentlyContinue | ForEach-Object {
+        $c = [System.IO.File]::ReadAllText($_.FullName, [System.Text.Encoding]::UTF8)
+        $c = $c.Replace("{{SECRETARY_BASE_DIR}}", $SecretaryBase)
+        Write-Utf8NoBom -Path ([IO.Path]::Combine($DestKnowledgeDir, $_.Name)) -Content $c
+    }
+}
+
 Write-Host "データフォルダを準備しました"
 
 # --- インストール後の検証 ---
 $verifyOk    = $true
-$secMdPath   = [IO.Path]::Combine($RulesDir, "秘書.md")
+$secMdPath   = [IO.Path]::Combine($RulesDir, ($RulesPrefix + "秘書.md"))
 $profilePath = [IO.Path]::Combine($SecretaryBase, "ユーザープロフィール.md")
 $requiredFiles = @($secMdPath, $profilePath)
 
@@ -272,10 +322,15 @@ foreach ($f in $requiredFiles) {
         $verifyOk = $false
     }
 }
-# 秘書.mdにプレースホルダーが残っていないか確認
-$secContent = [System.IO.File]::ReadAllText($secMdPath, [System.Text.Encoding]::UTF8)
-if ($secContent.Contains("{{SECRETARY_BASE_DIR}}")) {
-    Write-Host "エラー: 秘書.mdのパス置換が不完全です"
+# 配置した rules 全ファイルにプレースホルダーが残っていないか確認
+# 2026-07-28 修正: 以前は 秘書.md 1本しか検証しておらず、他10本の置換漏れを見逃していた
+$placeholderLeft = @()
+foreach ($f in (Get-ChildItem $RulesDir -Filter ($RulesPrefix + "*.md") -ErrorAction SilentlyContinue)) {
+    $c = [System.IO.File]::ReadAllText($f.FullName, [System.Text.Encoding]::UTF8)
+    if ($c.Contains("{{SECRETARY_BASE_DIR}}")) { $placeholderLeft += $f.Name }
+}
+if ($placeholderLeft.Count -gt 0) {
+    Write-Host ("エラー: パス置換が不完全なファイルがあります: " + ($placeholderLeft -join ", "))
     $verifyOk = $false
 }
 if (-not $verifyOk) {

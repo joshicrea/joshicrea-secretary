@@ -133,11 +133,64 @@ if USER_SKILLS_DIR.exists():
         if old_skill.exists():
             shutil.rmtree(old_skill, ignore_errors=True)
 
+# 2026-07-28 修正: 以前は元のファイル名のまま無条件に上書きしていた。
+#  - お客様が自分で置いたルールと同名なら黙って破壊する
+#  - どれがこのプラグインの置いたファイルか分からず、解約後も消せない
+# 対策: 製品プレフィックスを付ける / 既存はバックアップ / 先頭に由来マーカーを入れる
+RULES_PREFIX = "AI秘書_"
+RULES_MARKER = (
+    "<!-- このファイルは joshicrea-secretary プラグインが配置しました。"
+    "削除するとAI秘書の出力品質ルールが無効になります。"
+    "アンインストール手順はプラグイン内の アンインストール.md を参照してください。 -->\n"
+)
 SOURCE_RULES_DIR = INSTALL_PATH / ".claude" / "rules"
+rules_backup_dir = RULES_DIR / f"_backup_secretary_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
+backed_up = 0
+removed_old = 0
 for rules_file in SOURCE_RULES_DIR.glob("*.md"):
     content = rules_file.read_text(encoding="utf-8")
     content = content.replace("{{SECRETARY_BASE_DIR}}", str(SECRETARY_BASE))
-    (RULES_DIR / rules_file.name).write_text(content, encoding="utf-8")
+
+    dest_name = RULES_PREFIX + rules_file.name
+    dest = RULES_DIR / dest_name
+
+    # 既存ファイルがこのプラグイン由来でなければ退避してから書く
+    if dest.exists():
+        try:
+            existing = dest.read_text(encoding="utf-8")
+        except Exception:
+            existing = ""
+        if "joshicrea-secretary" not in existing:
+            rules_backup_dir.mkdir(parents=True, exist_ok=True)
+            (rules_backup_dir / dest_name).write_text(existing, encoding="utf-8")
+            backed_up += 1
+
+    dest.write_text(RULES_MARKER + content, encoding="utf-8")
+
+    # 旧バージョンがプレフィックスなしで置いたファイルを掃除する
+    legacy = RULES_DIR / rules_file.name
+    if legacy.exists():
+        try:
+            lc = legacy.read_text(encoding="utf-8")
+            if "joshicrea-secretary" in lc or str(SECRETARY_BASE) in lc or "{{SECRETARY_BASE_DIR}}" in lc:
+                legacy.unlink()
+                removed_old += 1
+        except Exception:
+            pass
+
+if backed_up:
+    print(f"  既存の同名ファイル {backed_up} 件を {rules_backup_dir} に退避しました")
+if removed_old:
+    print(f"  旧バージョンが配置したファイル {removed_old} 件を整理しました")
+
+# --- ナレッジをコピー（参照先が存在しなかった問題の修正・2026-07-28）---
+SOURCE_KNOWLEDGE_DIR = INSTALL_PATH / ".claude" / "ナレッジ"
+if SOURCE_KNOWLEDGE_DIR.exists():
+    dest_knowledge = SECRETARY_BASE / "ナレッジ"
+    dest_knowledge.mkdir(parents=True, exist_ok=True)
+    for kf in SOURCE_KNOWLEDGE_DIR.glob("*.md"):
+        c = kf.read_text(encoding="utf-8").replace("{{SECRETARY_BASE_DIR}}", str(SECRETARY_BASE))
+        (dest_knowledge / kf.name).write_text(c, encoding="utf-8")
 
 # --- SKILL.md の{{SECRETARY_BASE_DIR}}をプラグインキャッシュ内で置換 ---
 SOURCE_SKILLS_DIR = INSTALL_PATH / ".claude" / "skills"
@@ -175,7 +228,7 @@ print("データフォルダを準備しました")
 
 # --- インストール後の検証 ---
 verify_ok   = True
-sec_md_path = RULES_DIR / "秘書.md"
+sec_md_path = RULES_DIR / (RULES_PREFIX + "秘書.md")
 profile_path = SECRETARY_BASE / "ユーザープロフィール.md"
 
 for f in [sec_md_path, profile_path]:
@@ -183,10 +236,15 @@ for f in [sec_md_path, profile_path]:
         print(f"エラー: {f} が作成されませんでした")
         verify_ok = False
 
-if sec_md_path.exists():
-    if "{{SECRETARY_BASE_DIR}}" in sec_md_path.read_text(encoding="utf-8"):
-        print("エラー: 秘書.mdのパス置換が不完全です")
-        verify_ok = False
+# 配置した rules 全ファイルの置換漏れを見る
+# 2026-07-28 修正: 以前は 秘書.md 1本しか検証しておらず、他10本の漏れを見逃していた
+placeholder_left = [
+    f.name for f in RULES_DIR.glob(RULES_PREFIX + "*.md")
+    if "{{SECRETARY_BASE_DIR}}" in f.read_text(encoding="utf-8")
+]
+if placeholder_left:
+    print("エラー: パス置換が不完全なファイルがあります: " + ", ".join(placeholder_left))
+    verify_ok = False
 
 if not verify_ok:
     print()

@@ -113,7 +113,36 @@ GitHub (joshicrea/joshicrea-secretary)
        └─ インストール後検証（失敗したら exit 1）
 
 Claude Code 起動時:
-  ~/.claude/rules/*.md が自動読み込み → 秘書.md が秘書ルールを定義
+  ~/.claude/rules/AI秘書_*.md が自動読み込み → AI秘書_秘書.md が秘書ルールを定義
   Skill ツール呼び出し時:
     キャッシュ内の SKILL.md が読み込まれる（{{SECRETARY_BASE_DIR}} 置換済み）
 ```
+
+---
+
+## 開発時の注意（2026-07-28 CLAUDE.md から移設）
+
+CLAUDE.md は SessionStart hook でお客様のセッションに「あなたの動作指示」として丸ごと注入される。開発者向けの内容を CLAUDE.md に書くと、お客様に開発手順が指示として渡る。開発者向けの記述はこのファイルに書く。
+
+- パス参照は必ず `{{SECRETARY_BASE_DIR}}/xxx` の形式で書く（相対パス禁止）
+- コミット前に `python3 ツール/パス検証.py` を実行してパス漏れを確認する
+- install.ps1 / install.py を変更したら、クリーンな環境でインストールを通して検証する
+
+### rules の配置規約（2026-07-28変更）
+
+`~/.claude/rules/` はお客様の領域であり、他のプラグインやお客様自身のルールと共有する。次を守る。
+
+- 配置するファイル名には `AI秘書_` プレフィックスを付ける（名前の衝突を避ける）
+- ファイル先頭に由来マーカー（`<!-- このファイルは joshicrea-secretary プラグインが配置しました... -->`）を入れる
+- 同名の既存ファイルがプラグイン由来でなければ `_backup_secretary_<日時>/` へ退避してから書く
+- 旧バージョンがプレフィックスなしで置いたファイルは、由来が確認できるものだけ削除する
+
+### hook を書くときの必須事項（2026-07-28確定・実測ベース）
+
+- **stdin は必ず bytes で読んで UTF-8 デコードする。** `sys.stdin.read()` は Windows で cp932 として解釈され、日本語を含む入力で JSON パースが壊れる
+- **PowerShell スクリプトは UTF-8 BOM 付きで保存する。** BOM が無いと PowerShell 5.1 が ANSI（日本語環境では CP932）として読み、スクリプト内の日本語リテラルが壊れる
+- **PowerShell から JSON を出すときは `[Console]::Out.Write` を使わない。** stdout リダイレクト時に `[Console]::OutputEncoding`（日本語環境では shift_jis）で書き出され、UTF-8 の日本語が破損する。標準出力ストリームへ UTF-8 バイトを直接書く
+- **JSON エスケープは1回だけ。** プレフィックス文字列に `\n` リテラルを書かず実改行を使う。2回エスケープすると改行が文字列 `\n` になり、注入内容の Markdown 構造が全部失われる
+- **printf のフォーマット文字列にデータを渡さない。** 注入内容に `%` が1文字入ると出力が壊れる
+- **fail-open は維持しつつ、無音にしない。** 例外は `{{SECRETARY_BASE_DIR}}/logs/hook_errors.log` に記録する。無音だと「ルールが届かなくなった」ことが正常時と見分けられない
+- **Stop hook の payload は `transcript_path`（ファイルパス）。** `transcript`（配列）は存在しない
