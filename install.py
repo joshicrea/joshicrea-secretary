@@ -193,7 +193,7 @@ if SOURCE_KNOWLEDGE_DIR.exists():
         (dest_knowledge / kf.name).write_text(c, encoding="utf-8")
 
 # --- SKILL.md の{{SECRETARY_BASE_DIR}}をプラグインキャッシュ内で置換 ---
-SOURCE_SKILLS_DIR = INSTALL_PATH / ".claude" / "skills"
+SOURCE_SKILLS_DIR = INSTALL_PATH / "skills"
 for skill_md in SOURCE_SKILLS_DIR.rglob("SKILL.md"):
     content = skill_md.read_text(encoding="utf-8")
     replaced = content.replace("{{SECRETARY_BASE_DIR}}", str(SECRETARY_BASE))

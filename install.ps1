@@ -237,7 +237,7 @@ if ($RemovedOld -gt 0) { Write-Host "  旧バージョンが配置したファ�
 
 # --- SKILL.md の{{SECRETARY_BASE_DIR}}をプラグインキャッシュ内で置換 ---
 # Skillツールはキャッシュ内のSKILL.mdを読む。絶対パスに置換しておかないとパスが壊れる。
-$SourceSkillsDir = [IO.Path]::Combine($InstallPath, ".claude", "skills")
+$SourceSkillsDir = [IO.Path]::Combine($InstallPath, "skills")
 Get-ChildItem $SourceSkillsDir -Recurse -Filter "SKILL.md" -ErrorAction SilentlyContinue | ForEach-Object {
     $skillContent = [System.IO.File]::ReadAllText($_.FullName, [System.Text.Encoding]::UTF8)
     $skillReplaced = $skillContent.Replace("{{SECRETARY_BASE_DIR}}", $SecretaryBase)

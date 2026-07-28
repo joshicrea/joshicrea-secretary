@@ -107,7 +107,7 @@ GitHub (joshicrea/joshicrea-secretary)
        ├─ ZIP ダウンロード → キャッシュ: ~/.claude/plugins/cache/{org}/{name}/{sha}/
        ├─ .claude/rules/*.md を ~/.claude/rules/ にコピー（全件・動的）
        │   └─ {{SECRETARY_BASE_DIR}} → 実際の絶対パスに置換
-       ├─ キャッシュ内 .claude/skills/*/SKILL.md の {{SECRETARY_BASE_DIR}} を置換
+       ├─ キャッシュ内 skills/*/SKILL.md の {{SECRETARY_BASE_DIR}} を置換
        ├─ installed_plugins.json / settings.json を更新
        ├─ ~/.claude/secretary/ データディレクトリを作成
        └─ インストール後検証（失敗したら exit 1）
@@ -127,6 +127,25 @@ CLAUDE.md は SessionStart hook でお客様のセッションに「あなたの
 - パス参照は必ず `{{SECRETARY_BASE_DIR}}/xxx` の形式で書く（相対パス禁止）
 - コミット前に `python3 ツール/パス検証.py` を実行してパス漏れを確認する
 - install.ps1 / install.py を変更したら、クリーンな環境でインストールを通して検証する
+
+### スキルの配置規約（2026-07-28修正・重要）
+
+**プラグインのスキルはリポジトリ直下の `skills/` に置く。`.claude/skills/` に置くと、プラグインスキルとして読み込まれない。**
+
+2026-07-28に実測して確認した事実:
+
+| プラグイン | 配置 |
+|---|---|
+| claude-plugins-official/superpowers | root `skills/`（14本） |
+| awesome-claude-plugins/frontend-design | root `skills/` |
+| awesome-claude-plugins/mcp-builder | root `skills/` |
+| 旧版 joshicrea-secretary キャッシュ | root `skills/`（1本）＋ `.claude/skills/`（14本） |
+
+`.claude/skills/` を使っているプラグインは1つも無い。この製品は19本のスキルを `.claude/skills/` に置いており、そのまま配布すると**プラグインスキルが0本になる**状態だった（開発機では作業ディレクトリ由来のディレクトリスコープ・スキルとして見えてしまい、気づきにくい）。
+
+- スキルは `skills/{スキル名}/SKILL.md`
+- `install.ps1` / `install.py` のプレースホルダー置換も `INSTALL_PATH / "skills"` を見る
+- `rules/秘書.md` のルーティング表も `skills/{名前}/` で書く
 
 ### rules の配置規約（2026-07-28変更）
 

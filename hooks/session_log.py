@@ -14,6 +14,7 @@ Obsidian連携が設定されている場合はVaultにも二重保存する。
 import sys
 import json
 import os
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -77,7 +78,29 @@ def ensure_header(path, session_id, cwd):
         path.write_text(header, encoding="utf-8", errors="replace")
 
 
+def mask_secrets(text):
+    """会話ログに書く前に、資格情報らしき値を伏せる。
+
+    2026-07-28 追加: 会話ログは Obsidian Vault にも二重保存され、Vault は
+    クラウド同期されていることが多い。ルールで「書かない」と定めるだけでは
+    取りこぼすため、書き込み経路そのものでマスクする。
+    """
+    patterns = [
+        # key: value / key = value 形式（トークン・パスワード・APIキー）
+        (r'(?i)\b(chatwork[_-]?token|api[_-]?token|api[_-]?key|access[_-]?token|'
+         r'imap[_-]?pass|smtp[_-]?pass|email[_-]?pass|password|passwd|secret)\b'
+         r'(\s*[:=]\s*)([^\s"\',]{6,})', r'\1\2***マスク済み***'),
+        # HTTPヘッダ形式
+        (r'(?i)(X-ChatWorkToken\s*:\s*)(\S{6,})', r'\1***マスク済み***'),
+        (r'(?i)(Authorization\s*:\s*Bearer\s+)(\S{6,})', r'\1***マスク済み***'),
+    ]
+    for pat, rep in patterns:
+        text = re.sub(pat, rep, text)
+    return text
+
+
 def append(text, session_id, cwd):
+    text = mask_secrets(text)
     targets = [NOTES_DIR]
     obsidian = get_obsidian_dir()
     if obsidian:
