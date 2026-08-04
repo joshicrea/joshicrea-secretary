@@ -224,6 +224,14 @@ if TEMPLATES_DIR.exists():
             if not dest.exists():
                 shutil.copy(str(tmpl), str(dest))
 
+# --- 初回セットアップ手順を配置（毎回読ませないため rules/ ではなくデータ側に置く）---
+# 秘書.md から分離した手順書。ユーザーデータではなく製品側の内容なので毎回上書きする。
+_ONBOARDING_SRC = INSTALL_PATH / "docs" / "初回セットアップ.md"
+if _ONBOARDING_SRC.exists():
+    _c = _ONBOARDING_SRC.read_text(encoding="utf-8").replace(
+        "{{SECRETARY_BASE_DIR}}", str(SECRETARY_BASE))
+    (SECRETARY_BASE / "初回セットアップ.md").write_text(_c, encoding="utf-8")
+
 print("データフォルダを準備しました")
 
 # --- インストール後の検証 ---
@@ -231,7 +239,9 @@ verify_ok   = True
 sec_md_path = RULES_DIR / (RULES_PREFIX + "秘書.md")
 profile_path = SECRETARY_BASE / "ユーザープロフィール.md"
 
-for f in [sec_md_path, profile_path]:
+onboarding_path = SECRETARY_BASE / "初回セットアップ.md"
+
+for f in [sec_md_path, profile_path, onboarding_path]:
     if not f.exists():
         print(f"エラー: {f} が作成されませんでした")
         verify_ok = False
