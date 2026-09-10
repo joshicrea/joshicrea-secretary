@@ -1,0 +1,92 @@
+name: クリーン環境インストール検証
+
+# なぜこれがあるか（2026-09-10 新設）
+#
+# 購入者環境でだけ発症する欠陥が6件見つかった。うち1件は「Mac の新規購入者は
+# インストールが必ず失敗する」もので、表示が「もう一度試してください」だったため
+# 何度やり直しても同じ結果になっていた。
+#
+# 6件とも開発機では再現しない。Git bash・初回セットアップ.md・email-mcp が
+# 既に揃っているため、本人が動作確認しても異常が出ないため。
+#
+# 販売ツール/CLAUDE.md の配布前チェックリスト項目19
+# 「クリーンな別マシン（または別ユーザー）で貼り付けプロンプトを実行し、
+#  エラーなく完了する」を通していれば全件出た。この項目が人の意志に
+# 委ねられていたことが根本原因なので、機械で毎回通す。
+#
+# 重要: 検証には作業ツリーではなく git archive の出力を使う。
+# 発症した欠陥は .gitattributes の export-ignore で配布ZIPからファイルが
+# 消えることによるもので、作業ツリーを見るテストでは絶対に検出できない。
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  REPO_API: https://api.github.com/repos/joshicrea/joshicrea-secretary/commits/master
+
+jobs:
+  install-windows:
+    name: Windows でインストールできるか
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 配布ZIPと同じものを作る（export-ignore を効かせる）
+        shell: bash
+        run: |
+          git archive --format=tar HEAD -o dist.tar
+          echo "--- 配布物に入るルート直下 ---"
+          tar -tf dist.tar | grep -v "/" | sed "s/^/  /"
+
+      - name: 隔離したHOMEへ展開してインストーラを実行
+        shell: bash
+        run: |
+          SHA=$(curl -fsSL -H "User-Agent: joshicrea-install" "$REPO_API" | python -c "import sys,json;print(json.load(sys.stdin)['sha'][:12])")
+          echo "公開中の short_sha: $SHA"
+          SB="$RUNNER_TEMP/sandbox"
+          DEST="$SB/.claude/plugins/cache/joshicrea/joshicrea-secretary/$SHA"
+          mkdir -p "$DEST"
+          tar -xf dist.tar -C "$DEST"
+          USERPROFILE="$(cygpath -w "$SB")" HOME="$SB" python install.py
+          echo "SANDBOX=$SB" >> "$GITHUB_ENV"
+
+      - name: 配置されたものを検証
+        shell: bash
+        run: python .github/scripts/verify_install.py "$SANDBOX"
+
+  install-mac:
+    name: macOS でインストールできるか
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 配布ZIPと同じものを作る
+        run: git archive --format=tar HEAD -o dist.tar
+
+      - name: 配布物の改行コードを検証
+        run: python .github/scripts/verify_line_endings.py dist.tar
+
+      - name: 隔離したHOMEへ展開してインストーラを実行
+        run: |
+          SHA=$(curl -fsSL -H "User-Agent: joshicrea-install" "$REPO_API" | python -c "import sys,json;print(json.load(sys.stdin)['sha'][:12])")
+          echo "公開中の short_sha: $SHA"
+          SB="$RUNNER_TEMP/sandbox"
+          DEST="$SB/.claude/plugins/cache/joshicrea/joshicrea-secretary/$SHA"
+          mkdir -p "$DEST"
+          tar -xf dist.tar -C "$DEST"
+          HOME="$SB" python install.py
+          echo "SANDBOX=$SB" >> "$GITHUB_ENV"
+
+      - name: 配置されたものを検証
+        run: python .github/scripts/verify_install.py "$SANDBOX"
