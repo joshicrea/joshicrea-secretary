@@ -24,6 +24,11 @@ MIN_RULES = 12
 PLACEHOLDER = "{{SECRETARY_BASE_DIR}}"
 
 
+# Windows CI runner はデフォルトで stdout を cp1252 等のレガシーコードページで開き、
+# 日本語の print が UnicodeEncodeError になる（2026-09-10 実測）。UTF-8に固定する。
+sys.stdout.reconfigure(encoding="utf-8")
+sys.stderr.reconfigure(encoding="utf-8")
+
 def main() -> int:
     if len(sys.argv) < 2:
         print("使い方: verify_install.py <サンドボックスのHOME>")

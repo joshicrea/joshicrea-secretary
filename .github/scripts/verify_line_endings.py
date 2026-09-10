@@ -30,6 +30,11 @@ MUST_BE_LF = ["hooks/run-hook.cmd", "hooks/session-start", "hooks/session-log", 
 MUST_BE_ASCII = ["hooks/run-hook.cmd"]
 
 
+# Windows CI runner はデフォルトで stdout を cp1252 等のレガシーコードページで開き、
+# 日本語の print が UnicodeEncodeError になる（2026-09-10 実測）。UTF-8に固定する。
+sys.stdout.reconfigure(encoding="utf-8")
+sys.stderr.reconfigure(encoding="utf-8")
+
 def main() -> int:
     if len(sys.argv) < 2:
         print("使い方: verify_line_endings.py <dist.tar>")

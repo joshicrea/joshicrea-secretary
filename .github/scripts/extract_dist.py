@@ -16,6 +16,11 @@ import sys
 import tarfile
 
 
+# Windows CI runner はデフォルトで stdout を cp1252 等のレガシーコードページで開き、
+# 日本語の print が UnicodeEncodeError になる（2026-09-10 実測）。UTF-8に固定する。
+sys.stdout.reconfigure(encoding="utf-8")
+sys.stderr.reconfigure(encoding="utf-8")
+
 def main() -> int:
     dest = os.environ.get("EXTRACT_DEST")
     if not dest:
