@@ -55,8 +55,11 @@ jobs:
           mkdir -p "$DEST"
           # bash の tar -C は Windows runner で MSYS由来の tar.exe とパス変換が
           # 噛み合わず、隔離HOMEのパスを開けず exit 2 になった（2026-09-10 実測）。
-          # Python の tarfile で展開し、native tar.exe を経由しない
-          python -c "import tarfile; tarfile.open('dist.tar').extractall('$DEST')"
+          # Python の tarfile で展開する。ただし $DEST を python -c の文字列へ
+          # 直接埋め込むと、Windows のバックスラッシュパス中の \a が Python の
+          # 文字列エスケープとして解釈され BEL(0x07)混入で壊れる（同日に3回踏んだ
+          # 同型のバグ）。環境変数経由で渡し、シェル文字列への埋め込みを無くす
+          EXTRACT_DEST="$DEST" python .github/scripts/extract_dist.py
           USERPROFILE="$(cygpath -w "$SB")" HOME="$SB" python install.py
           echo "SANDBOX=$SB" >> "$GITHUB_ENV"
 
@@ -89,8 +92,11 @@ jobs:
           mkdir -p "$DEST"
           # bash の tar -C は Windows runner で MSYS由来の tar.exe とパス変換が
           # 噛み合わず、隔離HOMEのパスを開けず exit 2 になった（2026-09-10 実測）。
-          # Python の tarfile で展開し、native tar.exe を経由しない
-          python -c "import tarfile; tarfile.open('dist.tar').extractall('$DEST')"
+          # Python の tarfile で展開する。ただし $DEST を python -c の文字列へ
+          # 直接埋め込むと、Windows のバックスラッシュパス中の \a が Python の
+          # 文字列エスケープとして解釈され BEL(0x07)混入で壊れる（同日に3回踏んだ
+          # 同型のバグ）。環境変数経由で渡し、シェル文字列への埋め込みを無くす
+          EXTRACT_DEST="$DEST" python .github/scripts/extract_dist.py
           HOME="$SB" python install.py
           echo "SANDBOX=$SB" >> "$GITHUB_ENV"
 
