@@ -53,7 +53,10 @@ jobs:
           SB="$RUNNER_TEMP/sandbox"
           DEST="$SB/.claude/plugins/cache/joshicrea/joshicrea-secretary/$SHA"
           mkdir -p "$DEST"
-          tar -xf dist.tar -C "$DEST"
+          # bash の tar -C は Windows runner で MSYS由来の tar.exe とパス変換が
+          # 噛み合わず、隔離HOMEのパスを開けず exit 2 になった（2026-09-10 実測）。
+          # Python の tarfile で展開し、native tar.exe を経由しない
+          python -c "import tarfile; tarfile.open('dist.tar').extractall('$DEST')"
           USERPROFILE="$(cygpath -w "$SB")" HOME="$SB" python install.py
           echo "SANDBOX=$SB" >> "$GITHUB_ENV"
 
@@ -84,7 +87,10 @@ jobs:
           SB="$RUNNER_TEMP/sandbox"
           DEST="$SB/.claude/plugins/cache/joshicrea/joshicrea-secretary/$SHA"
           mkdir -p "$DEST"
-          tar -xf dist.tar -C "$DEST"
+          # bash の tar -C は Windows runner で MSYS由来の tar.exe とパス変換が
+          # 噛み合わず、隔離HOMEのパスを開けず exit 2 になった（2026-09-10 実測）。
+          # Python の tarfile で展開し、native tar.exe を経由しない
+          python -c "import tarfile; tarfile.open('dist.tar').extractall('$DEST')"
           HOME="$SB" python install.py
           echo "SANDBOX=$SB" >> "$GITHUB_ENV"
 
