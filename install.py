@@ -6,7 +6,7 @@
 #   内容を確認してから実行してください:
 #   https://raw.githubusercontent.com/joshicrea/joshicrea-secretary/master/install.py
 #
-import sys, os, json, urllib.request, zipfile, shutil, tempfile, pathlib, datetime
+import sys, os, json, urllib.request, zipfile, shutil, tempfile, pathlib, datetime, subprocess
 
 sys.stdout.reconfigure(encoding="utf-8")
 
@@ -202,6 +202,32 @@ for skill_md in SOURCE_SKILLS_DIR.rglob("SKILL.md"):
 
 print("ルールファイルとスキルを設定しました")
 
+# --- email-mcp を展開して依存関係をインストール ---
+# 2026-09-10 追加: install.ps1 にはこの処理があったが install.py には無く、
+# Mac では独自ドメインメール連携が実装されていないのに、初回セットアップは
+# Mac でも同じ質問（アドレス・IMAPホスト・パスワード）をしていた。
+_EMAIL_SRC = INSTALL_PATH / "ツール" / "email-mcp"
+_EMAIL_DST = SECRETARY_BASE / "ツール" / "email-mcp"
+if _EMAIL_SRC.exists():
+    _EMAIL_DST.mkdir(parents=True, exist_ok=True)
+    for _name in ("index.js", "package.json"):
+        _s = _EMAIL_SRC / _name
+        if _s.exists():
+            shutil.copy(str(_s), str(_EMAIL_DST / _name))
+    _npm = shutil.which("npm")
+    if _npm:
+        try:
+            _no_window = getattr(subprocess, "CREATE_NO_WINDOW", 0)  # 非Windowsでは0
+            subprocess.run([_npm, "install", "--silent"], cwd=str(_EMAIL_DST),
+                           check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                           creationflags=_no_window)
+            print("email-mcp の依存パッケージをインストールしました")
+        except Exception as _e:
+            print(f"警告: email-mcp の依存インストールに失敗しました: {_e}")
+    else:
+        print("警告: npm が見つかりません。独自ドメインメール連携を使う場合は "
+              "Node.js をインストールしてください: https://nodejs.org/")
+
 # --- データディレクトリを作成 ---
 for sub in ["memory/学習ログ", "memory/タスク", "素材"]:
     (SECRETARY_BASE / sub).mkdir(parents=True, exist_ok=True)
@@ -226,11 +252,17 @@ if TEMPLATES_DIR.exists():
 
 # --- 初回セットアップ手順を配置（毎回読ませないため rules/ ではなくデータ側に置く）---
 # 秘書.md から分離した手順書。ユーザーデータではなく製品側の内容なので毎回上書きする。
-_ONBOARDING_SRC = INSTALL_PATH / "docs" / "初回セットアップ.md"
+# 2026-09-10 修正: 配布元が docs/ だったが、.gitattributes の `docs/ export-ignore` により
+# GitHub の master.zip から docs/ ごと除外されており、この行は常に偽になっていた。
+# その結果 Mac は下の検証で exit 1（インストール自体が失敗）、Windows は無言で欠品していた。
+# 製品ファイルなのでプラグイン直下へ移し、開発ドキュメントの除外はそのまま残す。
+_ONBOARDING_SRC = INSTALL_PATH / "初回セットアップ.md"
 if _ONBOARDING_SRC.exists():
     _c = _ONBOARDING_SRC.read_text(encoding="utf-8").replace(
         "{{SECRETARY_BASE_DIR}}", str(SECRETARY_BASE))
     (SECRETARY_BASE / "初回セットアップ.md").write_text(_c, encoding="utf-8")
+else:
+    print(f"警告: {_ONBOARDING_SRC} が配布物に含まれていません")
 
 print("データフォルダを準備しました")
 

@@ -308,13 +308,24 @@ if (Test-Path $SourceKnowledgeDir) {
     }
 }
 
+# 初回セットアップ手順を配置（毎回読ませないため rules/ ではなくデータ側に置く）
+# 2026-09-10 追加: install.py 側にしか無く、Windows では配置されないまま
+# rules/秘書.md の Phase 0-1 が読めと指示していた（購入者環境で手順書が不在になっていた）。
+$OnboardingSrc = [IO.Path]::Combine($InstallPath, "初回セットアップ.md")
+if (Test-Path $OnboardingSrc) {
+    $c = [System.IO.File]::ReadAllText($OnboardingSrc, [System.Text.Encoding]::UTF8)
+    $c = $c.Replace("{{SECRETARY_BASE_DIR}}", $SecretaryBase)
+    Write-Utf8NoBom -Path ([IO.Path]::Combine($SecretaryBase, "初回セットアップ.md")) -Content $c
+}
+
 Write-Host "データフォルダを準備しました"
 
 # --- インストール後の検証 ---
 $verifyOk    = $true
 $secMdPath   = [IO.Path]::Combine($RulesDir, ($RulesPrefix + "秘書.md"))
 $profilePath = [IO.Path]::Combine($SecretaryBase, "ユーザープロフィール.md")
-$requiredFiles = @($secMdPath, $profilePath)
+$onboardingPath = [IO.Path]::Combine($SecretaryBase, "初回セットアップ.md")
+$requiredFiles = @($secMdPath, $profilePath, $onboardingPath)
 
 foreach ($f in $requiredFiles) {
     if (-not (Test-Path $f)) {
