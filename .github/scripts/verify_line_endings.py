@@ -26,8 +26,10 @@ import tarfile
 CR = bytes([13])  # 復帰文字。ソースに直接書くと壊れるため数値で書く
 
 # パス -> 期待する状態
-MUST_BE_LF = ["hooks/run-hook.cmd", "hooks/session-start", "hooks/session-log", "install.py"]
-MUST_BE_ASCII = ["hooks/run-hook.cmd"]
+# hooks/run-hook.ps1（2026-10-28 追加）: hooks.json が実際に呼ぶ polyglot ディスパッチャー。
+# bash/zsh が読むので LF、Windows PowerShell 5.1 が BOM 無しを ANSI で読むので ASCII のみ。
+MUST_BE_LF = ["hooks/run-hook.cmd", "hooks/run-hook.ps1", "hooks/session-start", "hooks/session-log", "install.py"]
+MUST_BE_ASCII = ["hooks/run-hook.cmd", "hooks/run-hook.ps1"]
 
 
 # Windows CI runner はデフォルトで stdout を cp1252 等のレガシーコードページで開き、

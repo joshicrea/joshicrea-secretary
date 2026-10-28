@@ -16,6 +16,11 @@ install.py text eol=lf
 # cmd.exe は LF のみでも解釈できることを 2026-09-10 に実測で確認済み。
 hooks/run-hook.cmd text eol=lf
 
+# run-hook.ps1 は PowerShell と Unix の bash/zsh の両方が読む polyglot（hooks.json はこれを
+# 「. "<root>/hooks/run-hook.ps1" <名前>」で呼ぶ）。上の *.ps1 の CRLF 指定を打ち消して LF にする。
+# CRLF だと macOS の bash/zsh が行末の CR を読み、シェル側の分岐が壊れる。2026-10-28 追加。
+hooks/run-hook.ps1 text eol=lf
+
 # 配布ZIP（GitHubのarchive）に含めない開発用ファイル
 # install は master.zip をダウンロードして展開するため、export-ignore が効く。
 # ただしこれ1本に頼らず、開発ドキュメント側の個人パスもサニタイズしてある（二重の防御）。

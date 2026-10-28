@@ -6,12 +6,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" session-start",
+            "command": ". \"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.ps1\" session-start",
             "async": false
           },
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" cw-heartbeat",
+            "command": ". \"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.ps1\" cw-heartbeat",
             "async": true
           }
         ]
@@ -22,12 +22,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" session-log UserPromptSubmit",
+            "command": ". \"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.ps1\" session-log UserPromptSubmit",
             "async": true
           },
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" cw-heartbeat",
+            "command": ". \"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.ps1\" cw-heartbeat",
             "async": true
           }
         ]
@@ -38,7 +38,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" session-log Stop",
+            "command": ". \"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.ps1\" session-log Stop",
             "async": true
           }
         ]
